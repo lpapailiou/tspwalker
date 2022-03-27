@@ -1,0 +1,181 @@
+.root {
+    -fx-font-size: 11pt;
+    -fx-background-color: -fx-base;
+    /*-fx-font-family: "Courier New";*/
+}
+
+.radio-button, .combo-box, .check-box {
+    -fx-alignment: center-left;
+    -fx-font-size: 10pt;
+    -fx-cursor: hand;
+}
+
+.check-box:disabled, #pathTxt:disabled {
+    -fx-opacity: 1.0;
+}
+
+#pathTxt {
+    -fx-background-color: transparent;
+}
+.text-area {
+    -fx-background-color: transparent;
+}
+
+.radio-button .radio, .check-box .mark {
+    -fx-border-width: 0px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 2.0em;
+    -fx-padding: 0.2em;
+    -fx-cursor: hand;
+}
+
+.text-area {
+    -fx-border-radius: 5 5 0 0;
+    -fx-background-radius: 5 5 0 0;
+}
+
+.split-pane:horizontal > .split-pane-divider {
+    -fx-background-color: transparent;
+}
+
+.split-pane:vertical > .split-pane-divider {
+    -fx-background-color: transparent;
+}
+
+.split-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-opacity: 0;
+}
+
+.tab-pane {
+    -fx-tab-min-width: 90px;
+}
+
+.tab {
+    -fx-background-insets: 0 1 0 1, 0, 0;
+}
+
+.tab .tab-label {
+    -fx-alignment: CENTER;
+    -fx-cursor: hand;
+}
+
+.tab:selected .tab-label {
+    -fx-alignment: CENTER;
+}
+
+.scroll-bar {
+    -fx-border-width: 0px;
+    -fx-cursor: hand;
+}
+
+.scroll-bar .track {
+    -fx-background-color: -fx-base;
+}
+
+.radio-button .dot {
+    -fx-background-radius: 10px;
+    -fx-padding: 6px;
+}
+
+.combo-box .list-cell {
+    -fx-translate-y: 0px;
+    -fx-cursor: hand;
+}
+
+.tooltip {
+    -fx-font-size: 12pt;
+}
+
+
+.button {
+    -fx-effect: null;
+    -fx-cursor: hand;
+}
+
+.popup {
+    -fx-font-size: 10pt;
+    -fx-background-color: -fx-base;
+    -fx-background-radius-radius: 4px;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-alignment: center;
+}
+
+.popup .label {
+    -fx-text-fill: -fx-text-background-color;
+}
+
+/* ------------------------- flat design from here ------------------------- */
+
+.combo-box-base, .button, .radio-button .radio, .check-box .box {
+    -fx-background-color: -fx-base, -fx-body-color, -fx-base, -fx-base;
+}
+
+.combo-box-base:hover, .button:hover, .radio-button:hover .radio {
+    -fx-color: -fx-hover-base;
+    -fx-background-color: -fx-hover-base;
+}
+
+.check-box .box {
+    -fx-background-color: -fx-base;
+    -fx-border-color: -fx-base;
+    -fx-border-radius: 3px;
+    -fx-border-width: 1px;
+}
+
+.check-box > .box > .mark {
+    -fx-font-size: 24;
+}
+
+.check-box:selected > .box > .mark,
+.check-box:indeterminate > .box > .mark {
+    -fx-background-color: -fx-focus-color;
+}
+
+.box {
+    -fx-background-color: -fx-base;
+}
+
+.combo-box-base:showing, .button:showing, .radio-button:showing .radio {
+    -fx-color: -fx-pressed-base;
+    -fx-background-color: -fx-pressed-base;
+}
+
+.combo-box-base:focused, .button:focused, .radio-button-base:focused {
+    -fx-background-color: -fx-pressed-base;
+    -fx-background-radius: 6.4, 4, 5, 3;
+    -fx-background-insets: -1, 1, 1, 1;
+}
+
+.radio-button:focused > .radio {
+    -fx-background-color: -fx-pressed-base;
+    -fx-background-insets: -1.4, 0, 1, 2;
+}
+
+.combo-box-base:pressed, .button:pressed, .radio-button:pressed .radio, .check-box:pressed .mark {
+    -fx-color: -fx-pressed-base;
+    -fx-background-color: -fx-pressed-base;
+}
+
+.combo-box-base:disabled, .text-field:disabled, .button:disabled, .radio-button:disabled, .check-box:disabled {
+    -fx-cursor: default;
+}
+
+.text-field {
+    -fx-background-color: -fx-body-color, -fx-base, -fx-base;
+}
+
+.text-field:focused {
+    -fx-background-color: -fx-pressed-base;
+    -fx-background-radius: 6.4, 4, 5, 3;
+    -fx-background-insets: -1.4, 0, 1, 2;
+}
+
+.combo-box-popup > .list-view {
+    -fx-effect: null;
+}
