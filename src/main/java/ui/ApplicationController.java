@@ -1,4 +1,4 @@
-package main;
+package ui;
 
 import ai.GraphWalker;
 import ch.kaiki.nn.data.Graph;
@@ -8,6 +8,7 @@ import ch.kaiki.nn.ui.NN2DPlot;
 import ch.kaiki.nn.ui.NNGraph;
 import ch.kaiki.nn.ui.color.GraphColor;
 import ch.kaiki.nn.ui.color.NNGraphColor;
+import ch.kaiki.nn.util.Initializer;
 import data.Dataset;
 import data.DatasetType;
 import javafx.animation.Animation;
@@ -26,6 +27,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import ui.State;
 
 import java.net.URL;
 import java.util.Arrays;
@@ -41,6 +43,8 @@ public class ApplicationController implements Initializable {
     private GridPane grid;
     @FXML
     private Canvas graphCanvas;
+    @FXML
+    private Canvas statsCanvas;
     @FXML
     private HBox hiddenLayerConfiguration;
     @FXML
@@ -61,6 +65,8 @@ public class ApplicationController implements Initializable {
     @FXML
     private Label stepCount;
     @FXML
+    private Label maxStepCount;
+    @FXML
     private Label distanceCount;
     @FXML
     private Label targetDistance;
@@ -75,22 +81,26 @@ public class ApplicationController implements Initializable {
 
     @FXML
     private Button startBut;
+    @FXML
+    private Button skipBut;
+    @FXML
+    private Button stopBut;
 
     private Stage stage;
     private final ObservableList<String> datasetList = FXCollections.observableArrayList(Arrays.stream(DatasetType.values()).map(Enum::name).collect(Collectors.toList()));
     private ObservableList<String> layerCount = FXCollections.observableArrayList("0", "1", "2", "3", "4", "5");
     private State state = State.getInstance();
     private NN2DPlot graphPlot;
+    private NN2DPlot statsPlot;
     private NNGraph nnPlot;
     private GraphColor graphColor = new GraphColor(PINK, TRANSPARENT, DARKRED, DARKRED, LIGHTSALMON, DARKRED);
     private NNGraphColor nnGraphColor = new NNGraphColor(TRANSPARENT, DARKRED, DARKRED, LIGHTSALMON, TRANSPARENT, DARKRED.brighter(), DARKRED.darker(),DARKRED.brighter(), DARKRED.darker());
     private Timeline timeline;
+    final GraphWalker[] graphWalker = {null};
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        graphPlot = new NN2DPlot(graphCanvas.getGraphicsContext2D());
-        graphPlot.showTickMarkLabels(false);
-        graphPlot.showTickMarks(false);
+        setGraphs();
 
         nnPlot = new NNGraph(nnVisualizationCanvas.getGraphicsContext2D());
         nnPlot.setColorPalette(nnGraphColor);
@@ -104,10 +114,26 @@ public class ApplicationController implements Initializable {
             loadDataset();
         });
         startBut.setOnAction(e -> runAlgorithm());
+        skipBut.setOnAction(e -> skip());
+        stopBut.setOnAction(e -> stopTimeline());
         initializeControls();
         loadDataset();
         updateHiddenLayerCount();
         Platform.runLater(() -> grid.getParent().requestFocus());
+    }
+
+    private void setGraphs() {
+        graphPlot = new NN2DPlot(graphCanvas.getGraphicsContext2D());
+        graphPlot.showTickMarkLabels(false);
+        graphPlot.showTickMarks(false);
+        graphPlot.setTitle("graph for dataset " + state.getDatasetName());
+        graphPlot.triggerInvalidate();
+
+        statsPlot = new NN2DPlot(statsCanvas.getGraphicsContext2D());
+        statsPlot.showLegend(true);
+        statsPlot.setTitle("generation statistics");
+        statsPlot.triggerInvalidate();
+
     }
 
     private void loadDataset() {
@@ -119,69 +145,99 @@ public class ApplicationController implements Initializable {
         Graph graph = dataset.getGraph();
         int verticeCount = graph.getVertices().size();
         state.setConfiguration(new int[]{verticeCount*3, verticeCount*2, verticeCount});
-        graphPlot.setTitle("Graph for dataset " + type.name());
         graphPlot.plotGraph(graph, graphColor);
+
+        // TOOD: set hidden layers to default
         updateHiddenLayerCount();
         updateHiddenLayerNodeCount();
         loadNeuralNetwork();
     }
 
+    // TODO: make agent for algorithm
+    // TODO: implement propert for genetic reproduction pool size
+    // TODO: implement go / continue mode
+
     private void loadNeuralNetwork() {
         // initialize new neural network
 
         NeuralNetwork neuralNetwork = new NeuralNetwork.Builder(state.getConfiguration())
-                .setMutationRate(state.getRandomizationRate()).build();
-        state.setNeuralNetwork(neuralNetwork);
+                .setMutationRate(state.getRandomizationRate())
+                .setInitializer(Initializer.XAVIER)
+                .build();
+        state.setNeuralNetwork(neuralNetwork, nnPlot);
 
-        // visualize neural network
-        nnPlot.setNeuralNetwork(neuralNetwork);
     }
 
 
     private void runAlgorithm() {
         setDisable(true);
+        setGraphs();
         GeneticAlgorithmBatch<GraphWalker> batch = new GeneticAlgorithmBatch<>(GraphWalker.class, state.getNeuralNetwork(), state.getPopulationSize());
-        final GraphWalker[] graphWalker = {null};
+
         int maxGenerations = state.getGenerationCount();
+        final GraphWalker[] testWalker = {null};
         AtomicInteger currentGeneration = new AtomicInteger(-1);
         timeline = new Timeline((new KeyFrame(Duration.millis(200), e -> {
             if (graphWalker[0] == null) {
                 currentGeneration.getAndIncrement();
                 batch.processGeneration();
                 NeuralNetwork best = batch.getBestNeuralNetwork();
+
+                testWalker[0] = new GraphWalker(best);
+                while (testWalker[0].perform()) {}
+
                 graphWalker[0] = new GraphWalker(best);
-                nnPlot.setNeuralNetwork(graphWalker[0].getNeuralNetwork());
-                graphPlot.plotGraph(graphWalker[0].getGraph(), graphColor);
+                state.setNeuralNetwork(best, nnPlot);
+                if (maxGenerations != currentGeneration.get()) {
+                    graphPlot.plotGraph(graphWalker[0].getGraph(), graphColor);
+                }
             }
 
             if (graphWalker[0] == null || maxGenerations == currentGeneration.get()) {
                 stopTimeline();
             } else {
-                boolean running = graphWalker[0].perform();
-                graphPlot.plotGraph(graphWalker[0].getGraph(), graphColor);
-                Platform.runLater(() -> {
-                    if (graphWalker[0] != null) {
-                        stepCount.setText(graphWalker[0].getSteps() + "");
-                        distanceCount.setText(graphWalker[0].getDistance() + "");
-                        targetDistance.setText(graphWalker[0].getTargetDistance() + "");
-                        generationCount.setText(currentGeneration + "");
-                        pathTxt.setText(graphWalker[0].getPath().toString());
-                    }
-                });
-
-                if (!running) {
+                if (testWalker[0] != null && testWalker[0].isImmature()) {
                     graphWalker[0] = null;
+                    stepCount.setText(testWalker[0].getSteps() + "");
+                    maxStepCount.setText(testWalker[0].getMaxSteps() + "");
+                    distanceCount.setText(testWalker[0].getDistance() + "");
+                    targetDistance.setText(testWalker[0].getTargetDistance() + "");
+                    generationCount.setText(currentGeneration + "");
+                    pathTxt.setText(testWalker[0].getPath().toString());
+                } else {
+                    boolean running = graphWalker[0].perform();
+                    graphPlot.plotGraph(graphWalker[0].getGraph(), graphColor);
+
+                    Platform.runLater(() -> {
+                        if (graphWalker[0] != null) {
+                            stepCount.setText(graphWalker[0].getSteps() + "");
+                            maxStepCount.setText(graphWalker[0].getMaxSteps() + "");
+                            distanceCount.setText(graphWalker[0].getDistance() + "");
+                            targetDistance.setText(graphWalker[0].getTargetDistance() + "");
+                            generationCount.setText(currentGeneration + "");
+                            pathTxt.setText(graphWalker[0].getPath().toString());
+                        }
+                    });
+
+                    if (!running) {
+                        statsPlot.plotLine(currentGeneration.get(), graphWalker[0].getDistance(), "distance", RED);
+                        statsPlot.plotLine(currentGeneration.get(), graphWalker[0].getSteps(), "steps", BLUE);
+                        graphWalker[0] = null;
+                    }
                 }
+
             }
         })));
         timeline.setCycleCount(Animation.INDEFINITE);
         timeline.play();
+    }
 
-
-
+    private void skip() {
+        graphWalker[0] = null;
     }
 
     private void stopTimeline() {
+        graphWalker[0] = null;
         if (timeline != null) {
             timeline.stop();
         }
@@ -192,6 +248,8 @@ public class ApplicationController implements Initializable {
         generationControl.setText(state.getGenerationCount() + "");
         populationControl.setText(state.getPopulationSize() + "");
         randomizationControl.setText(state.getRandomizationRate() + "");
+        skipBut.setDisable(true);
+        stopBut.setDisable(true);
         pathTxt.setEditable(false);
         pathTxt.setFocusTraversable(false);
 
@@ -366,11 +424,13 @@ public class ApplicationController implements Initializable {
         hiddenLayerConfiguration.setDisable(disable);
         geneticControls.setDisable(disable);
         startBut.setDisable(disable);
+        skipBut.setDisable(!disable);
+        stopBut.setDisable(!disable);
 
 
-        if (!disable) {
+        //if (!disable) {
             Platform.runLater(() -> grid.getParent().requestFocus());
-        }
+        //}
     }
 
     public void setStage(Stage stage) {

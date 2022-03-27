@@ -4,10 +4,9 @@ import ch.kaiki.nn.data.*;
 import ch.kaiki.nn.genetic.GeneticAlgorithmObject;
 import ch.kaiki.nn.neuralnet.NeuralNetwork;
 import data.Dataset;
-import main.State;
+import ui.State;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -76,7 +75,7 @@ public class GraphWalker extends GeneticAlgorithmObject {
 
     @Override
     public boolean isImmature() {
-        return false;
+        return verticesVisited < totalVertices / 2;
     }
 
     @Override
@@ -98,6 +97,10 @@ public class GraphWalker extends GeneticAlgorithmObject {
 
     public int getSteps() {
         return steps;
+    }
+
+    public int getMaxSteps() {
+        return maxSteps;
     }
 
     public double getTargetDistance() {

@@ -1,6 +1,7 @@
-package main;
+package ui;
 
 import ch.kaiki.nn.neuralnet.NeuralNetwork;
+import ch.kaiki.nn.ui.NNGraph;
 import data.Dataset;
 import data.DatasetBuilder;
 import data.DatasetType;
@@ -42,8 +43,16 @@ public class State {
         return currentDataset.copy();
     }
 
-    public void setNeuralNetwork(NeuralNetwork neuralNetwork) {
+    public String getDatasetName() {
+        if (currentDataset == null) {
+            return "";
+        }
+        return currentDataset.getName();
+    }
+
+    public void setNeuralNetwork(NeuralNetwork neuralNetwork, NNGraph nnGraph) {
         this.neuralNetwork = neuralNetwork;
+        nnGraph.setNeuralNetwork(neuralNetwork);
     }
 
     public NeuralNetwork getNeuralNetwork() {
