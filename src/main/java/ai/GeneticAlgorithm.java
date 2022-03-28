@@ -8,7 +8,7 @@ import ui.State;
 
 import java.util.*;
 
-public class GraphWalker extends GeneticAlgorithmObject {
+public class GeneticAlgorithm extends GeneticAlgorithmObject {
 
     private final Dataset dataset = State.getInstance().getCurrentDataset();
     private final Graph graph = dataset.getGraph();
@@ -24,7 +24,7 @@ public class GraphWalker extends GeneticAlgorithmObject {
     private int steps;
     private final int maxSteps;
 
-    public GraphWalker(NeuralNetwork neuralNetwork) {
+    public GeneticAlgorithm(NeuralNetwork neuralNetwork) {
         super(neuralNetwork);
         vertices.get(0).setHighlighted(true);
         int n = neuralNetwork.getConfiguration()[0] / 3;
@@ -40,6 +40,7 @@ public class GraphWalker extends GeneticAlgorithmObject {
             vision[i+totalVertices] = vertices.get(i).isVisited() ? 1 : 0;
             double weight = vertices.get(currentVerticeIndex).getEdges().get(i).getWeight();
             vision[i+totalVertices*2] = weight <= 0 ? 0 : weight / maxWeight;
+            //vision[i+totalVertices*2] = weight <= 0 ? 1 : weight / maxWeight;
         }
         List<Double> prediction = predict(vision);
         int maxIndex = prediction.indexOf(Collections.max(prediction));
@@ -63,12 +64,19 @@ public class GraphWalker extends GeneticAlgorithmObject {
         steps++;
         currentVerticeIndex = maxIndex;
         vertices.get(currentVerticeIndex).setHighlighted(true);
-        return !(verticesVisited == totalVertices && currentVerticeIndex == 0) && steps < maxSteps && path.size() <= new HashSet<>(path).size() * 5;
+       /* if (path.size() > verticesVisited * 5) {
+            cost += minPathLength * maxSteps * (maxSteps-steps);
+        }*/
+        return !(verticesVisited == totalVertices && currentVerticeIndex == 0) && steps < maxSteps && path.size() <= verticesVisited * 5;
     }
 
     @Override
     public double getFitness() {
-        return verticesVisited * maxSteps / cost + verticesVisited * maxSteps;
+        //return (verticesVisited * maxSteps / cost + verticesVisited * maxSteps) * verticesVisited / steps;
+        //return Math.pow(verticesVisited, 2) / (cost * (steps - verticesVisited));
+        double verticeValue = Math.pow(verticesVisited, 3);
+        return (verticeValue / cost + verticeValue);
+        //return (verticeValue / cost + verticeValue) * ((double) verticesVisited / steps);
     }
 
     @Override
@@ -99,6 +107,9 @@ public class GraphWalker extends GeneticAlgorithmObject {
 
     public int getMaxSteps() {
         return maxSteps;
+    }
+    public double getCost() {
+        return cost;
     }
 
     public double getTargetDistance() {

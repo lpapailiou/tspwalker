@@ -1,6 +1,6 @@
 package ui;
 
-import ai.GraphWalker;
+import ai.GeneticAlgorithm;
 import ch.kaiki.nn.data.Graph;
 import ch.kaiki.nn.genetic.GeneticAlgorithmBatch;
 import ch.kaiki.nn.neuralnet.NeuralNetwork;
@@ -117,7 +117,7 @@ public class ApplicationController implements Initializable {
     private final NNChartColor chartColor = new NNChartColor(TRANSPARENT, blend(LIGHTGRAY, TRANSPARENT, 0), DARKGRAY, LIGHTGRAY, LIGHTGRAY, DARKGRAY, DARKGRAY, DARKGRAY);
     private final NNGraphColor nnGraphColor = new NNGraphColor(TRANSPARENT, accentColor, accentColor, LIGHTSALMON, TRANSPARENT, accentColor.brighter(), accentColor.darker(), accentColor.brighter(), accentColor.darker());
     private Timeline timeline;
-    final GraphWalker[] graphWalker = {null};
+    final GeneticAlgorithm[] geneticAlgorithm = {null};
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -156,6 +156,7 @@ public class ApplicationController implements Initializable {
         statsPlot = new NN2DPlot(statsCanvas.getGraphicsContext2D());
         statsPlot.setChartColors(chartColor);
         statsPlot.setTitle("distance development");
+        statsPlot.showLegend(true);
         statsPlot.triggerInvalidate();
 
     }
@@ -198,48 +199,54 @@ public class ApplicationController implements Initializable {
         loadNeuralNetwork();
         setDisable(true);
         setGraphs();
-        GeneticAlgorithmBatch<GraphWalker> batch = new GeneticAlgorithmBatch<>(GraphWalker.class, state.getNeuralNetwork(), state.getPopulationSize())
+        GeneticAlgorithmBatch<GeneticAlgorithm> batch = new GeneticAlgorithmBatch<>(GeneticAlgorithm.class, state.getNeuralNetwork(), state.getPopulationSize())
                 .setReproductionPoolSize(state.getPoolSize())
                 .setReproductionSpecimenCount(state.getParentCount());
 
         int maxGenerations = state.getGenerationCount();
         AtomicInteger currentGeneration = new AtomicInteger(-1);
         timeline = new Timeline((new KeyFrame(Duration.millis(200), e -> {
-            if (graphWalker[0] == null) {
+            if (geneticAlgorithm[0] == null) {
                 currentGeneration.getAndIncrement();
                 batch.processGeneration();
                 NeuralNetwork best = batch.getBestNeuralNetwork();
-                graphWalker[0] = new GraphWalker(best);
+                geneticAlgorithm[0] = new GeneticAlgorithm(best);
 
                 if (maxGenerations != currentGeneration.get()) {
                     state.setNeuralNetwork(best, nnPlot);
-                    graphPlot.plotGraph(graphWalker[0].getGraph(), graphColor);
+                    graphPlot.plotGraph(geneticAlgorithm[0].getGraph(), graphColor);
                 }
             }
 
-            if (graphWalker[0] == null || maxGenerations == currentGeneration.get()) {
+            if (geneticAlgorithm[0] == null || maxGenerations == currentGeneration.get()) {
                 stopTimeline();
             } else {
-                boolean running = graphWalker[0].perform();
-                graphPlot.plotGraph(graphWalker[0].getGraph(), graphColor);
-                int steps = graphWalker[0].getSteps();
-                int maxSteps = graphWalker[0].getMaxSteps();
-                double distance = graphWalker[0].getDistance();
-                double tDistance = graphWalker[0].getTargetDistance();
-                String path = graphWalker[0].getPath().toString();
+                boolean running = geneticAlgorithm[0].perform();
+                graphPlot.plotGraph(geneticAlgorithm[0].getGraph(), graphColor);
+                int steps = geneticAlgorithm[0].getSteps();
+                int maxSteps = geneticAlgorithm[0].getMaxSteps();
+                double distance = geneticAlgorithm[0].getDistance();
+                double tDistance = geneticAlgorithm[0].getTargetDistance();
+                String path = geneticAlgorithm[0].getPath().toString();
                 int gen = currentGeneration.get();
+                double fitness = geneticAlgorithm[0].getFitness();
+                double cost = geneticAlgorithm[0].getCost();
                 Platform.runLater(() -> {
                     stepCount.setText(steps + "");
                     maxStepCount.setText(maxSteps + "");
-                    distanceCount.setText(distance + "");
-                    targetDistance.setText(tDistance + "");
+                    distanceCount.setText(String.format("%,.0f", distance) + "");
+                    targetDistance.setText(String.format("%,.0f", tDistance) + "");
                     generationCount.setText(gen + "");
                     pathTxt.setText(path);
                 });
 
                 if (!running) {
+                    statsPlot.plotLine(currentGeneration.get(), cost, "cost", ORANGE.darker());
+                    statsPlot.plotLine(currentGeneration.get(), fitness, "fitness", LIMEGREEN.darker());
                     statsPlot.plotLine(currentGeneration.get(), distance, "distance", accentColor.darker());
-                    graphWalker[0] = null;
+
+
+                    geneticAlgorithm[0] = null;
                 }
 
             }
@@ -249,11 +256,11 @@ public class ApplicationController implements Initializable {
     }
 
     private void skip() {
-        graphWalker[0] = null;
+        geneticAlgorithm[0] = null;
     }
 
     private void stopTimeline() {
-        graphWalker[0] = null;
+        geneticAlgorithm[0] = null;
         if (timeline != null) {
             timeline.stop();
         }

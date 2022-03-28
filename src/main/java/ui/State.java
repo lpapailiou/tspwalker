@@ -6,6 +6,7 @@ import ch.kaiki.nn.util.Optimizer;
 import data.Dataset;
 import data.DatasetBuilder;
 import data.DatasetType;
+import javafx.animation.Timeline;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,7 @@ public class State {
     private double poolSize = 0.1;
     private Optimizer mutationRateOptimizer = Optimizer.NONE;
     private double mutationRateDecay = 0.01;
+    private Timeline timeline;
 
 
     private int[] configuration = {0,0,0};
@@ -128,5 +130,13 @@ public class State {
 
     public double getMutationRateDecay() {
         return mutationRateDecay;
+    }
+
+    public void setTimeline(Timeline timeline) {
+        this.timeline = timeline;
+    }
+
+    public Timeline getTimeline() {
+        return timeline;
     }
 }
