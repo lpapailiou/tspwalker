@@ -6,31 +6,29 @@ import ch.kaiki.nn.neuralnet.NeuralNetwork;
 import data.Dataset;
 import ui.State;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class GraphWalker extends GeneticAlgorithmObject {
 
-    private Dataset dataset = State.getInstance().getCurrentDataset();
-    private Graph graph = dataset.getGraph();
-    private List<IVertice> vertices = graph.getVertices();
-    private int totalVertices = vertices.size();
+    private final Dataset dataset = State.getInstance().getCurrentDataset();
+    private final Graph graph = dataset.getGraph();
+    private final List<IVertice> vertices = graph.getVertices();
+    private final int totalVertices = vertices.size();
     private int currentVerticeIndex = 0;
     private int verticesVisited = 0;
-    private double maxWeight = dataset.getMaxWeight();
-    private List<String> path = new ArrayList<>();
+    private final double maxWeight = dataset.getMaxWeight();
+    private final List<String> path = new ArrayList<>();
     private double cost = 1;
-    private double minPathLength = dataset.getMinPathLength();
+    private final double minPathLength = dataset.getMinPathLength();
     private double distance;
     private int steps;
-    private int maxSteps;
+    private final int maxSteps;
 
     public GraphWalker(NeuralNetwork neuralNetwork) {
         super(neuralNetwork);
         vertices.get(0).setHighlighted(true);
         int n = neuralNetwork.getConfiguration()[0] / 3;
-        maxSteps = (n*(n-1))/2;
+        maxSteps = n * 5; // (n*(n-1))/2;
         path.add(vertices.get(0).getName());
     }
 
@@ -61,16 +59,16 @@ public class GraphWalker extends GeneticAlgorithmObject {
 
         double weight = edge.getWeight();
         distance += weight;
-        cost += weight == 0 ? 10 : edge.getWeight();
+        cost += weight == 0 ? minPathLength * maxSteps : weight;
         steps++;
         currentVerticeIndex = maxIndex;
         vertices.get(currentVerticeIndex).setHighlighted(true);
-        return !hasReachedGoal() && steps <= maxSteps;
+        return !(verticesVisited == totalVertices && currentVerticeIndex == 0) && steps < maxSteps && path.size() <= new HashSet<>(path).size() * 5;
     }
 
     @Override
     public double getFitness() {
-        return 1 / cost + verticesVisited * 10;
+        return verticesVisited * maxSteps / cost + verticesVisited * maxSteps;
     }
 
     @Override

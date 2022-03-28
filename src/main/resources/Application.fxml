@@ -29,7 +29,7 @@
                                <children>
                                    <Region prefWidth="40.0" minWidth="40.0"/>
                                    <Label text="generation:"  prefWidth="100.0"/>
-                                   <Label fx:id="generationCount" text="0" prefWidth="140.0">
+                                   <Label fx:id="generationCount" text="0" prefWidth="200.0">
                                        <font>
                                            <Font name="System Bold" size="18.0" />
                                        </font></Label>
@@ -40,9 +40,9 @@
                                <children>
                                    <Region prefWidth="40.0" minWidth="40.0"/>
                                    <Label  text="steps:" prefWidth="100.0"/>
-                                   <Label fx:id="stepCount" text="0"  prefWidth="60.0"/>
+                                   <Label fx:id="stepCount" text="0"  prefWidth="200.0"/>
                                    <Label  text="max steps:" prefWidth="100.0"/>
-                                   <Label fx:id="maxStepCount" text="0"  prefWidth="60.0"/>
+                                   <Label fx:id="maxStepCount" text="0"  prefWidth="200.0"/>
                                    <Region HBox.hgrow="ALWAYS"  />
 
                                    <Region prefWidth="40.0" minWidth="40.0" />
@@ -52,9 +52,9 @@
                                <children>
                                    <Region prefWidth="40.0" minWidth="40.0"/>
                                    <Label text="distance:"  prefWidth="100.0"/>
-                                   <Label fx:id="distanceCount" text="0.0"  prefWidth="60.0"/>
+                                   <Label fx:id="distanceCount" text="0.0"  prefWidth="200.0"/>
                                    <Label text="target distance:"  prefWidth="100.0"/>
-                                   <Label fx:id="targetDistance" text="0.0"  prefWidth="60.0"/>
+                                   <Label fx:id="targetDistance" text="0.0"  prefWidth="200.0"/>
                                    <Region HBox.hgrow="ALWAYS"  />
 
                                    <Region prefWidth="40.0" minWidth="40.0" />
@@ -63,7 +63,7 @@
                            <HBox prefWidth="600.0" spacing="20.0">
                                <children>
                                    <Region prefWidth="40.0" minWidth="40.0"/>
-                                   <Label text="path:" prefWidth="100.0"/>
+                                   <Label text="path:" prefWidth="120.0"/>
                                    <TextArea fx:id="pathTxt" prefHeight="80.0" prefWidth="600.0" />
                                    <Region prefWidth="40.0" minWidth="40.0"/>
                                </children>
@@ -115,25 +115,53 @@
                                          </StackPane>
                                      </children>
                                   </HBox>
-      
-                                  <HBox fx:id="geneticControls" spacing="20">
-         <children>
-                                         <Label prefWidth="140.0" text="generations:" />
-                                         <TextField fx:id="generationControl" prefWidth="50.0" text="0" />
-                                         <Region HBox.hgrow="ALWAYS" />
-                                         <Label text="population size:" />
-                                         <TextField fx:id="populationControl" prefWidth="50.0" text="0" />
-                                         <Region HBox.hgrow="ALWAYS" />
-                                         <Label text="randomization rate:" />
-                                         <TextField fx:id="randomizationControl" prefWidth="50.0" text="0.0" />
-                                         <Region prefWidth="1" />
-         </children>
-                                  </HBox>
+                                  <VBox fx:id="geneticControls"  spacing="10.0">
+                                      <children>
+                                          <HBox spacing="20">
+                                              <children>
+                                                  <Label prefWidth="140.0" text="generations:" />
+                                                  <TextField fx:id="generationControl" prefWidth="50.0" text="0" />
+                                                  <Region prefWidth="20.0" />
+                                                  <Label prefWidth="120.0"  text="population size:" />
+                                                  <TextField fx:id="populationControl" prefWidth="50.0" text="0" />
+                                                  <Region HBox.hgrow="ALWAYS" />
+                                                  <Region prefWidth="1" />
+                                              </children>
+                                          </HBox>
+                                          <HBox spacing="20">
+                                              <children>
+                                                  <Label prefWidth="140.0" text="parent count:" />
+                                                  <TextField fx:id="parentCountControl" prefWidth="50.0" text="0" />
+                                                  <Region prefWidth="20.0" />
+                                                  <Label prefWidth="120.0"  text="pick from best %:" />
+                                                  <TextField fx:id="poolSizeControl" prefWidth="50.0" text="0" />
+                                                  <Region HBox.hgrow="ALWAYS" />
+                                                  <Region prefWidth="1" />
+                                              </children>
+                                          </HBox>
+                                          <HBox spacing="20">
+                                              <children>
+                                                  <Label prefWidth="140.0"  text="mutation rate:" />
+                                                  <TextField fx:id="mutationRateControl" prefWidth="50.0" text="0.0" />
+                                                  <Region prefWidth="20.0" />
+                                                  <Label prefWidth="120.0"  text="optimizer:" />
+                                                  <ComboBox fx:id="mutationRateOptimizerControl" prefWidth="100.0"  />
+                                                  <Region prefWidth="20.0" />
+                                                  <Label fx:id="mutationRateDecayLabel" prefWidth="50.0"  text="decay:" />
+                                                  <TextField fx:id="mutationRateDecayControl" prefWidth="50.0" text="0.0" />
+                                                  <Region prefWidth="20.0" />
+                                                  <Region HBox.hgrow="ALWAYS" />
+                                                  <Region prefWidth="1" />
+                                              </children>
+                                          </HBox>
+                                      </children>
+                                  </VBox>
+
                                <HBox spacing="20">
                                <children>
                                    <Region prefWidth="140.0" />
                                    <Button fx:id="startBut" prefWidth="100.0" text="GO!" />
-                                   <Button fx:id="skipBut" prefWidth="100.0" text="SKIP" />
+                                   <!--<Button fx:id="skipBut" prefWidth="100.0" text="SKIP" />-->
                                    <Button fx:id="stopBut" prefWidth="100.0" text="STOP" />
                                </children>
                                   </HBox>

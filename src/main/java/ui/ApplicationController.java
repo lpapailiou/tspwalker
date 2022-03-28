@@ -7,8 +7,10 @@ import ch.kaiki.nn.neuralnet.NeuralNetwork;
 import ch.kaiki.nn.ui.NN2DPlot;
 import ch.kaiki.nn.ui.NNGraph;
 import ch.kaiki.nn.ui.color.GraphColor;
+import ch.kaiki.nn.ui.color.NNChartColor;
 import ch.kaiki.nn.ui.color.NNGraphColor;
 import ch.kaiki.nn.util.Initializer;
+import ch.kaiki.nn.util.Optimizer;
 import data.Dataset;
 import data.DatasetType;
 import javafx.animation.Animation;
@@ -24,10 +26,11 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import ui.State;
 
 import java.net.URL;
 import java.util.Arrays;
@@ -36,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static ch.kaiki.nn.ui.color.NNColor.blend;
 import static javafx.scene.paint.Color.*;
 
 public class ApplicationController implements Initializable {
@@ -54,7 +58,10 @@ public class ApplicationController implements Initializable {
     @FXML
     private ComboBox<String> datasetSelector;
     @FXML
-    private HBox geneticControls;
+    private VBox geneticControls;
+
+
+
     @FXML
     private ComboBox<String> hiddenLayerCount;
     @FXML
@@ -62,6 +69,17 @@ public class ApplicationController implements Initializable {
 
     @FXML
     private Label generationCount;
+    @FXML
+    private TextField parentCountControl;
+    @FXML
+    private TextField poolSizeControl;
+    @FXML
+    private ComboBox<String> mutationRateOptimizerControl;
+    @FXML
+    private Label mutationRateDecayLabel;
+    @FXML
+    private TextField mutationRateDecayControl;
+
     @FXML
     private Label stepCount;
     @FXML
@@ -77,24 +95,27 @@ public class ApplicationController implements Initializable {
     @FXML
     private TextField populationControl;
     @FXML
-    private TextField randomizationControl;
+    private TextField mutationRateControl;
 
     @FXML
     private Button startBut;
-    @FXML
-    private Button skipBut;
+   // @FXML
+   // private Button skipBut;
     @FXML
     private Button stopBut;
 
     private Stage stage;
     private final ObservableList<String> datasetList = FXCollections.observableArrayList(Arrays.stream(DatasetType.values()).map(Enum::name).collect(Collectors.toList()));
     private ObservableList<String> layerCount = FXCollections.observableArrayList("0", "1", "2", "3", "4", "5");
+    private ObservableList<String> optimizerList = FXCollections.observableArrayList("NONE", "SGD");
     private State state = State.getInstance();
     private NN2DPlot graphPlot;
     private NN2DPlot statsPlot;
     private NNGraph nnPlot;
-    private GraphColor graphColor = new GraphColor(PINK, TRANSPARENT, DARKRED, DARKRED, LIGHTSALMON, DARKRED);
-    private NNGraphColor nnGraphColor = new NNGraphColor(TRANSPARENT, DARKRED, DARKRED, LIGHTSALMON, TRANSPARENT, DARKRED.brighter(), DARKRED.darker(),DARKRED.brighter(), DARKRED.darker());
+    private final Color accentColor = Color.web("#c71585");
+    private final GraphColor graphColor = new GraphColor(PINK, TRANSPARENT, accentColor, accentColor, LIGHTSALMON, accentColor);
+    private final NNChartColor chartColor = new NNChartColor(TRANSPARENT, blend(LIGHTGRAY, TRANSPARENT, 0), DARKGRAY, LIGHTGRAY, LIGHTGRAY, DARKGRAY, DARKGRAY, DARKGRAY);
+    private final NNGraphColor nnGraphColor = new NNGraphColor(TRANSPARENT, accentColor, accentColor, LIGHTSALMON, TRANSPARENT, accentColor.brighter(), accentColor.darker(), accentColor.brighter(), accentColor.darker());
     private Timeline timeline;
     final GraphWalker[] graphWalker = {null};
 
@@ -114,7 +135,7 @@ public class ApplicationController implements Initializable {
             loadDataset();
         });
         startBut.setOnAction(e -> runAlgorithm());
-        skipBut.setOnAction(e -> skip());
+        //skipBut.setOnAction(e -> skip());
         stopBut.setOnAction(e -> stopTimeline());
         initializeControls();
         loadDataset();
@@ -124,14 +145,17 @@ public class ApplicationController implements Initializable {
 
     private void setGraphs() {
         graphPlot = new NN2DPlot(graphCanvas.getGraphicsContext2D());
+        graphPlot.setChartColors(chartColor);
         graphPlot.showTickMarkLabels(false);
         graphPlot.showTickMarks(false);
+        graphPlot.showGridContent(false);
         graphPlot.setTitle("graph for dataset " + state.getDatasetName());
         graphPlot.triggerInvalidate();
 
+
         statsPlot = new NN2DPlot(statsCanvas.getGraphicsContext2D());
-        statsPlot.showLegend(true);
-        statsPlot.setTitle("generation statistics");
+        statsPlot.setChartColors(chartColor);
+        statsPlot.setTitle("distance development");
         statsPlot.triggerInvalidate();
 
     }
@@ -154,14 +178,15 @@ public class ApplicationController implements Initializable {
     }
 
     // TODO: make agent for algorithm
-    // TODO: implement propert for genetic reproduction pool size
     // TODO: implement go / continue mode
 
     private void loadNeuralNetwork() {
         // initialize new neural network
 
         NeuralNetwork neuralNetwork = new NeuralNetwork.Builder(state.getConfiguration())
-                .setMutationRate(state.getRandomizationRate())
+                .setMutationRate(state.getMutationRate())
+                .setMutationRateOptimizer(state.getMutationRateOptimizer())
+                .setMutationRateMomentum(state.getMutationRateDecay())
                 .setInitializer(Initializer.XAVIER)
                 .build();
         state.setNeuralNetwork(neuralNetwork, nnPlot);
@@ -170,25 +195,24 @@ public class ApplicationController implements Initializable {
 
 
     private void runAlgorithm() {
+        loadNeuralNetwork();
         setDisable(true);
         setGraphs();
-        GeneticAlgorithmBatch<GraphWalker> batch = new GeneticAlgorithmBatch<>(GraphWalker.class, state.getNeuralNetwork(), state.getPopulationSize());
+        GeneticAlgorithmBatch<GraphWalker> batch = new GeneticAlgorithmBatch<>(GraphWalker.class, state.getNeuralNetwork(), state.getPopulationSize())
+                .setReproductionPoolSize(state.getPoolSize())
+                .setReproductionSpecimenCount(state.getParentCount());
 
         int maxGenerations = state.getGenerationCount();
-        final GraphWalker[] testWalker = {null};
         AtomicInteger currentGeneration = new AtomicInteger(-1);
         timeline = new Timeline((new KeyFrame(Duration.millis(200), e -> {
             if (graphWalker[0] == null) {
                 currentGeneration.getAndIncrement();
                 batch.processGeneration();
                 NeuralNetwork best = batch.getBestNeuralNetwork();
-
-                testWalker[0] = new GraphWalker(best);
-                while (testWalker[0].perform()) {}
-
                 graphWalker[0] = new GraphWalker(best);
-                state.setNeuralNetwork(best, nnPlot);
+
                 if (maxGenerations != currentGeneration.get()) {
+                    state.setNeuralNetwork(best, nnPlot);
                     graphPlot.plotGraph(graphWalker[0].getGraph(), graphColor);
                 }
             }
@@ -196,34 +220,26 @@ public class ApplicationController implements Initializable {
             if (graphWalker[0] == null || maxGenerations == currentGeneration.get()) {
                 stopTimeline();
             } else {
-                if (testWalker[0] != null && testWalker[0].isImmature()) {
+                boolean running = graphWalker[0].perform();
+                graphPlot.plotGraph(graphWalker[0].getGraph(), graphColor);
+                int steps = graphWalker[0].getSteps();
+                int maxSteps = graphWalker[0].getMaxSteps();
+                double distance = graphWalker[0].getDistance();
+                double tDistance = graphWalker[0].getTargetDistance();
+                String path = graphWalker[0].getPath().toString();
+                int gen = currentGeneration.get();
+                Platform.runLater(() -> {
+                    stepCount.setText(steps + "");
+                    maxStepCount.setText(maxSteps + "");
+                    distanceCount.setText(distance + "");
+                    targetDistance.setText(tDistance + "");
+                    generationCount.setText(gen + "");
+                    pathTxt.setText(path);
+                });
+
+                if (!running) {
+                    statsPlot.plotLine(currentGeneration.get(), distance, "distance", accentColor.darker());
                     graphWalker[0] = null;
-                    stepCount.setText(testWalker[0].getSteps() + "");
-                    maxStepCount.setText(testWalker[0].getMaxSteps() + "");
-                    distanceCount.setText(testWalker[0].getDistance() + "");
-                    targetDistance.setText(testWalker[0].getTargetDistance() + "");
-                    generationCount.setText(currentGeneration + "");
-                    pathTxt.setText(testWalker[0].getPath().toString());
-                } else {
-                    boolean running = graphWalker[0].perform();
-                    graphPlot.plotGraph(graphWalker[0].getGraph(), graphColor);
-
-                    Platform.runLater(() -> {
-                        if (graphWalker[0] != null) {
-                            stepCount.setText(graphWalker[0].getSteps() + "");
-                            maxStepCount.setText(graphWalker[0].getMaxSteps() + "");
-                            distanceCount.setText(graphWalker[0].getDistance() + "");
-                            targetDistance.setText(graphWalker[0].getTargetDistance() + "");
-                            generationCount.setText(currentGeneration + "");
-                            pathTxt.setText(graphWalker[0].getPath().toString());
-                        }
-                    });
-
-                    if (!running) {
-                        statsPlot.plotLine(currentGeneration.get(), graphWalker[0].getDistance(), "distance", RED);
-                        statsPlot.plotLine(currentGeneration.get(), graphWalker[0].getSteps(), "steps", BLUE);
-                        graphWalker[0] = null;
-                    }
                 }
 
             }
@@ -247,8 +263,11 @@ public class ApplicationController implements Initializable {
     private void initializeControls() {
         generationControl.setText(state.getGenerationCount() + "");
         populationControl.setText(state.getPopulationSize() + "");
-        randomizationControl.setText(state.getRandomizationRate() + "");
-        skipBut.setDisable(true);
+        mutationRateControl.setText(state.getMutationRate() + "");
+        parentCountControl.setText(state.getParentCount() + "");
+        poolSizeControl.setText(state.getPoolSize() + "");
+        mutationRateDecayControl.setText(state.getMutationRateDecay() + "");
+        //skipBut.setDisable(true);
         stopBut.setDisable(true);
         pathTxt.setEditable(false);
         pathTxt.setFocusTraversable(false);
@@ -257,39 +276,74 @@ public class ApplicationController implements Initializable {
         generationControl.focusedProperty().addListener((o, oldValue, newValue) -> {
             String previousValue = tempGenerations.toString();
             tempGenerations.set(generationControl.getText());
-            if (validateIntegerField(generationControl, 1, 5000, tempGenerations.toString(),
-                    previousValue)) {
+            if (validateIntegerField(generationControl, 1, 5000, tempGenerations.toString(), previousValue)) {
                 state.setGenerationCount(Integer.parseInt(tempGenerations.toString()));
             } else {
                 showPopupMessage("min: 1, max: 5000", generationControl);
             }
         });
 
-        AtomicReference<String> tempPopulations = new AtomicReference<>(
-                state.getPopulationSize() + "");
+        AtomicReference<String> tempPopulations = new AtomicReference<>(state.getPopulationSize() + "");
         populationControl.focusedProperty().addListener((o, oldValue, newValue) -> {
             String previousValue = tempPopulations.toString();
             tempPopulations.set(populationControl.getText());
-            if (validateIntegerField(populationControl, 1, 5000, tempPopulations.toString(),
-                    previousValue)) {
+            if (validateIntegerField(populationControl, 1, 5000, tempPopulations.toString(), previousValue)) {
                 state.setPopulationSize(Integer.parseInt(tempPopulations.toString()));
             } else {
                 showPopupMessage("min: 1, max: 5000", populationControl);
             }
         });
 
-        AtomicReference<String> tempRate = new AtomicReference<>(
-                state.getRandomizationRate() + "");
-        randomizationControl.focusedProperty().addListener((o, oldValue, newValue) -> {
-            String previousValue = tempRate.toString();
-            tempRate.set(randomizationControl.getText());
-            if (validateDoubleField(randomizationControl, 0, 1, tempRate.toString(),
-                    previousValue)) {
-                state.setRandomizationRate(Double.parseDouble(tempRate.toString()));
+        AtomicReference<String> tempParent = new AtomicReference<>(state.getParentCount() + "");
+        parentCountControl.focusedProperty().addListener((o, oldValue, newValue) -> {
+            String previousValue = tempParent.toString();
+            tempParent.set(parentCountControl.getText());
+            if (validateIntegerField(parentCountControl, 1, 16, tempParent.toString(), previousValue)) {
+                state.setParentCount(Integer.parseInt(tempParent.toString()));
             } else {
-                showPopupMessage("min: 0, max: 1", randomizationControl);
+                showPopupMessage("min: 1, max: 16", parentCountControl);
             }
         });
+
+        AtomicReference<String> tempRate = new AtomicReference<>(state.getMutationRate() + "");
+        mutationRateControl.focusedProperty().addListener((o, oldValue, newValue) -> {
+            String previousValue = tempRate.toString();
+            tempRate.set(mutationRateControl.getText());
+            if (validateDoubleField(mutationRateControl, 0, 1, tempRate.toString(),
+                    previousValue)) {
+                state.setMutationRate(Double.parseDouble(tempRate.toString()));
+            } else {
+                showPopupMessage("min: 0, max: 1", mutationRateControl);
+            }
+        });
+
+        AtomicReference<String> tempDecay = new AtomicReference<>(state.getMutationRateDecay() + "");
+        mutationRateDecayControl.focusedProperty().addListener((o, oldValue, newValue) -> {
+            String previousValue = tempDecay.toString();
+            tempDecay.set(mutationRateDecayControl.getText());
+            if (validateDoubleField(mutationRateDecayControl, 0, 1, tempDecay.toString(), previousValue)) {
+                state.setMutationRateDecay(Double.parseDouble(tempDecay.toString()));
+            } else {
+                showPopupMessage("min: 0, max: 1", mutationRateDecayControl);
+            }
+        });
+
+        AtomicReference<String> tempPool = new AtomicReference<>(state.getPoolSize() + "");
+        poolSizeControl.focusedProperty().addListener((o, oldValue, newValue) -> {
+            String previousValue = tempPool.toString();
+            tempPool.set(poolSizeControl.getText());
+            if (validateDoubleField(poolSizeControl, 0, 1, tempPool.toString(), previousValue)) {
+                state.setPoolSize(Double.parseDouble(tempPool.toString()));
+            } else {
+                showPopupMessage("min: 0, max: 1", poolSizeControl);
+            }
+        });
+
+        mutationRateOptimizerControl.setItems(optimizerList);
+        mutationRateOptimizerControl.getSelectionModel().select(state.getMutationRateOptimizer().ordinal());
+        mutationRateOptimizerControl.setOnAction(e -> updateOptimizerSelection());
+        mutationRateDecayLabel.setVisible(state.getMutationRateOptimizer() != Optimizer.NONE);
+        mutationRateDecayControl.setVisible(state.getMutationRateOptimizer() != Optimizer.NONE);
 
         hiddenLayerCount.setItems(layerCount);
         hiddenLayerCount.getSelectionModel().select((state.getConfiguration().length)-2);
@@ -317,6 +371,13 @@ public class ApplicationController implements Initializable {
                 }
             });
         }
+    }
+
+    private void updateOptimizerSelection() {
+        Optimizer selectedOptimizer = Optimizer.valueOf(mutationRateOptimizerControl.getValue());
+        mutationRateDecayLabel.setVisible(selectedOptimizer != Optimizer.NONE);
+        mutationRateDecayControl.setVisible(selectedOptimizer != Optimizer.NONE);
+        state.setMutationRateOptimizer(selectedOptimizer);
     }
 
     private void updateHiddenLayerCount() {
@@ -424,13 +485,10 @@ public class ApplicationController implements Initializable {
         hiddenLayerConfiguration.setDisable(disable);
         geneticControls.setDisable(disable);
         startBut.setDisable(disable);
-        skipBut.setDisable(!disable);
+        //skipBut.setDisable(!disable);
         stopBut.setDisable(!disable);
 
-
-        //if (!disable) {
-            Platform.runLater(() -> grid.getParent().requestFocus());
-        //}
+        Platform.runLater(() -> grid.getParent().requestFocus());
     }
 
     public void setStage(Stage stage) {

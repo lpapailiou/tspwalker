@@ -2,6 +2,7 @@ package ui;
 
 import ch.kaiki.nn.neuralnet.NeuralNetwork;
 import ch.kaiki.nn.ui.NNGraph;
+import ch.kaiki.nn.util.Optimizer;
 import data.Dataset;
 import data.DatasetBuilder;
 import data.DatasetType;
@@ -16,9 +17,15 @@ public class State {
     private List<Dataset> datasetCache = new ArrayList<>();
     private Dataset currentDataset;
     private NeuralNetwork neuralNetwork;
-    private int generationCount = 3;
+    private int generationCount = 100;
     private int populationSize = 500;
-    private double randomizationRate = 0.6;
+    private double mutationRate = 0.6;
+    private int parentCount = 3;
+    private double poolSize = 0.1;
+    private Optimizer mutationRateOptimizer = Optimizer.NONE;
+    private double mutationRateDecay = 0.01;
+
+
     private int[] configuration = {0,0,0};
 
 
@@ -75,12 +82,12 @@ public class State {
         return populationSize;
     }
 
-    public void setRandomizationRate(double randomizationRate) {
-        this.randomizationRate = randomizationRate;
+    public void setMutationRate(double mutationRate) {
+        this.mutationRate = mutationRate;
     }
 
-    public double getRandomizationRate() {
-        return randomizationRate;
+    public double getMutationRate() {
+        return mutationRate;
     }
 
     public void setConfiguration(int[] configuration) {
@@ -89,5 +96,37 @@ public class State {
 
     public int[] getConfiguration() {
         return configuration;
+    }
+
+    public void setParentCount(int parentCount) {
+        this.parentCount = parentCount;
+    }
+
+    public int getParentCount() {
+        return parentCount;
+    }
+
+    public void setPoolSize(double poolSize) {
+        this.poolSize = poolSize;
+    }
+
+    public double getPoolSize() {
+        return poolSize;
+    }
+
+    public void setMutationRateOptimizer(Optimizer mutationRateOptimizer) {
+        this.mutationRateOptimizer = mutationRateOptimizer;
+    }
+
+    public Optimizer getMutationRateOptimizer() {
+        return mutationRateOptimizer;
+    }
+
+    public void setMutationRateDecay(double mutationRateDecay) {
+        this.mutationRateDecay = mutationRateDecay;
+    }
+
+    public double getMutationRateDecay() {
+        return mutationRateDecay;
     }
 }
