@@ -124,6 +124,9 @@
                                                   <Region prefWidth="20.0" />
                                                   <Label prefWidth="120.0"  text="population size:" />
                                                   <TextField fx:id="populationControl" prefWidth="50.0" text="0" />
+                                                  <Region prefWidth="20.0" />
+                                                  <Label prefWidth="120.0"  text="initializer:" />
+                                                  <ComboBox fx:id="initializerControl" prefWidth="100.0"  />
                                                   <Region HBox.hgrow="ALWAYS" />
                                                   <Region prefWidth="1" />
                                               </children>
@@ -135,6 +138,24 @@
                                                   <Region prefWidth="20.0" />
                                                   <Label prefWidth="120.0"  text="pick from best %:" />
                                                   <TextField fx:id="poolSizeControl" prefWidth="50.0" text="0" />
+                                                  <Region prefWidth="20.0" />
+                                                  <Label prefWidth="120.0"  text="rectifier:" />
+                                                  <ComboBox fx:id="rectifierControl" prefWidth="100.0"  />
+                                                  <Region HBox.hgrow="ALWAYS" />
+                                                  <Region prefWidth="1" />
+                                              </children>
+                                          </HBox>
+                                          <HBox spacing="20">
+                                              <children>
+                                                  <Label prefWidth="140.0"  text="learning rate:" />
+                                                  <TextField fx:id="learningRateControl" prefWidth="50.0" text="0.0" />
+                                                  <Region prefWidth="20.0" />
+                                                  <Label prefWidth="120.0"  text="optimizer:" />
+                                                  <ComboBox fx:id="learningRateOptimizerControl" prefWidth="100.0"  />
+                                                  <Region prefWidth="20.0" />
+                                                  <Label fx:id="learningRateDecayLabel" prefWidth="50.0"  text="decay:" />
+                                                  <TextField fx:id="learningRateDecayControl" prefWidth="50.0" text="0.0" />
+                                                  <Region prefWidth="20.0" />
                                                   <Region HBox.hgrow="ALWAYS" />
                                                   <Region prefWidth="1" />
                                               </children>
@@ -154,6 +175,7 @@
                                                   <Region prefWidth="1" />
                                               </children>
                                           </HBox>
+
                                       </children>
                                   </VBox>
 

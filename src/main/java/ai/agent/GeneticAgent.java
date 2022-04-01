@@ -15,16 +15,18 @@ public class GeneticAgent extends Agent {
 
 
     private void runAlgorithm() {
-        /*
-        loadNeuralNetwork();
-        setDisable(true);
-        setGraphs();
+
+        //loadNeuralNetwork();
+        //setDisable(true);
+        //setGraphs();
         GeneticAlgorithmBatch<GeneticAlgorithm> batch = new GeneticAlgorithmBatch<>(GeneticAlgorithm.class, state.getNeuralNetwork(), state.getPopulationSize())
                 .setReproductionPoolSize(state.getPoolSize())
                 .setReproductionSpecimenCount(state.getParentCount());
 
         int maxGenerations = state.getGenerationCount();
         AtomicInteger currentGeneration = new AtomicInteger(-1);
+
+        /*
         timeline = new Timeline((new KeyFrame(Duration.millis(200), e -> {
             if (geneticAlgorithm[0] == null) {
                 currentGeneration.getAndIncrement();

@@ -2,7 +2,9 @@ package ui;
 
 import ch.kaiki.nn.neuralnet.NeuralNetwork;
 import ch.kaiki.nn.ui.NNGraph;
+import ch.kaiki.nn.util.Initializer;
 import ch.kaiki.nn.util.Optimizer;
+import ch.kaiki.nn.util.Rectifier;
 import data.Dataset;
 import data.DatasetBuilder;
 import data.DatasetType;
@@ -21,10 +23,15 @@ public class State {
     private int generationCount = 100;
     private int populationSize = 500;
     private double mutationRate = 0.6;
+    private double learningRate = 0.8;
     private int parentCount = 3;
     private double poolSize = 0.1;
     private Optimizer mutationRateOptimizer = Optimizer.NONE;
     private double mutationRateDecay = 0.01;
+    private Optimizer learningRateOptimizer = Optimizer.NONE;
+    private double learningRateDecay = 0.01;
+    private Rectifier rectifier = Rectifier.SIGMOID;
+    private Initializer initializer = Initializer.XAVIER;
     private Timeline timeline;
 
 
@@ -92,6 +99,14 @@ public class State {
         return mutationRate;
     }
 
+    public void setLearningRate(double learningRate) {
+        this.learningRate = learningRate;
+    }
+
+    public double getLearningRate() {
+        return learningRate;
+    }
+
     public void setConfiguration(int[] configuration) {
         this.configuration = configuration;
     }
@@ -132,11 +147,42 @@ public class State {
         return mutationRateDecay;
     }
 
+    public void setLearningRateOptimizer(Optimizer learningRateOptimizer) {
+        this.learningRateOptimizer = learningRateOptimizer;
+    }
+
+    public Optimizer getLearningRateOptimizer() {
+        return learningRateOptimizer;
+    }
+
+    public void setLearningRateDecay(double learningRateDecay) {
+        this.learningRateDecay = learningRateDecay;
+    }
+
+    public double getLearningRateDecay() {
+        return learningRateDecay;
+    }
+
     public void setTimeline(Timeline timeline) {
         this.timeline = timeline;
     }
 
     public Timeline getTimeline() {
         return timeline;
+    }
+
+    public void setRectifier(Rectifier rectifier) {
+        this.rectifier = rectifier;
+    }
+
+    public Rectifier getRectifier() {
+        return rectifier;
+    }
+    public void setInitializer(Initializer initializer) {
+        this.initializer = initializer;
+    }
+
+    public Initializer getInitializer() {
+        return initializer;
     }
 }

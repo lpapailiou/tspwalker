@@ -11,6 +11,7 @@ import ch.kaiki.nn.ui.color.NNChartColor;
 import ch.kaiki.nn.ui.color.NNGraphColor;
 import ch.kaiki.nn.util.Initializer;
 import ch.kaiki.nn.util.Optimizer;
+import ch.kaiki.nn.util.Rectifier;
 import data.Dataset;
 import data.DatasetType;
 import javafx.animation.Animation;
@@ -73,13 +74,27 @@ public class ApplicationController implements Initializable {
     private TextField parentCountControl;
     @FXML
     private TextField poolSizeControl;
+
+    @FXML
+    private TextField mutationRateControl;
     @FXML
     private ComboBox<String> mutationRateOptimizerControl;
     @FXML
     private Label mutationRateDecayLabel;
     @FXML
     private TextField mutationRateDecayControl;
-
+    @FXML
+    private TextField learningRateControl;
+    @FXML
+    private ComboBox<String> learningRateOptimizerControl;
+    @FXML
+    private Label learningRateDecayLabel;
+    @FXML
+    private TextField learningRateDecayControl;
+@FXML
+private ComboBox rectifierControl;
+@FXML
+private ComboBox initializerControl;
     @FXML
     private Label stepCount;
     @FXML
@@ -94,8 +109,7 @@ public class ApplicationController implements Initializable {
     private TextField generationControl;
     @FXML
     private TextField populationControl;
-    @FXML
-    private TextField mutationRateControl;
+
 
     @FXML
     private Button startBut;
@@ -108,6 +122,8 @@ public class ApplicationController implements Initializable {
     private final ObservableList<String> datasetList = FXCollections.observableArrayList(Arrays.stream(DatasetType.values()).map(Enum::name).collect(Collectors.toList()));
     private ObservableList<String> layerCount = FXCollections.observableArrayList("0", "1", "2", "3", "4", "5");
     private ObservableList<String> optimizerList = FXCollections.observableArrayList("NONE", "SGD");
+    private ObservableList<String> rectifierList = FXCollections.observableList(Arrays.stream(Rectifier.values()).map(Enum::name).collect(Collectors.toList()));
+    private ObservableList<String> initializerList = FXCollections.observableList(Arrays.stream(Initializer.values()).map(Enum::name).collect(Collectors.toList()));
     private State state = State.getInstance();
     private NN2DPlot graphPlot;
     private NN2DPlot statsPlot;
@@ -155,7 +171,7 @@ public class ApplicationController implements Initializable {
 
         statsPlot = new NN2DPlot(statsCanvas.getGraphicsContext2D());
         statsPlot.setChartColors(chartColor);
-        statsPlot.setTitle("distance development");
+        statsPlot.setTitle("statistics");
         statsPlot.showLegend(true);
         statsPlot.triggerInvalidate();
 
@@ -183,12 +199,16 @@ public class ApplicationController implements Initializable {
 
     private void loadNeuralNetwork() {
         // initialize new neural network
-
+        // TODO: move functionality to state
         NeuralNetwork neuralNetwork = new NeuralNetwork.Builder(state.getConfiguration())
                 .setMutationRate(state.getMutationRate())
                 .setMutationRateOptimizer(state.getMutationRateOptimizer())
                 .setMutationRateMomentum(state.getMutationRateDecay())
-                .setInitializer(Initializer.XAVIER)
+                .setLearningRate(state.getLearningRate())
+                .setLearningRateOptimizer(state.getLearningRateOptimizer())
+                .setLearningRateMomentum(state.getLearningRateDecay())
+                .setInitializer(state.getInitializer())
+                .setDefaultRectifier(state.getRectifier())
                 .build();
         state.setNeuralNetwork(neuralNetwork, nnPlot);
 
@@ -231,6 +251,7 @@ public class ApplicationController implements Initializable {
                 int gen = currentGeneration.get();
                 double fitness = geneticAlgorithm[0].getFitness();
                 double cost = geneticAlgorithm[0].getCost();
+
                 Platform.runLater(() -> {
                     stepCount.setText(steps + "");
                     maxStepCount.setText(maxSteps + "");
@@ -271,9 +292,11 @@ public class ApplicationController implements Initializable {
         generationControl.setText(state.getGenerationCount() + "");
         populationControl.setText(state.getPopulationSize() + "");
         mutationRateControl.setText(state.getMutationRate() + "");
+        learningRateControl.setText(state.getLearningRate() + "");
         parentCountControl.setText(state.getParentCount() + "");
         poolSizeControl.setText(state.getPoolSize() + "");
         mutationRateDecayControl.setText(state.getMutationRateDecay() + "");
+        learningRateDecayControl.setText(state.getLearningRateDecay() + "");
         //skipBut.setDisable(true);
         stopBut.setDisable(true);
         pathTxt.setEditable(false);
@@ -324,6 +347,18 @@ public class ApplicationController implements Initializable {
             }
         });
 
+        AtomicReference<String> tempLRate = new AtomicReference<>(state.getLearningRate() + "");
+        learningRateControl.focusedProperty().addListener((o, oldValue, newValue) -> {
+            String previousValue = tempLRate.toString();
+            tempLRate.set(learningRateControl.getText());
+            if (validateDoubleField(learningRateControl, 0, 1, tempLRate.toString(),
+                    previousValue)) {
+                state.setLearningRate(Double.parseDouble(tempLRate.toString()));
+            } else {
+                showPopupMessage("min: 0, max: 1", learningRateControl);
+            }
+        });
+
         AtomicReference<String> tempDecay = new AtomicReference<>(state.getMutationRateDecay() + "");
         mutationRateDecayControl.focusedProperty().addListener((o, oldValue, newValue) -> {
             String previousValue = tempDecay.toString();
@@ -332,6 +367,17 @@ public class ApplicationController implements Initializable {
                 state.setMutationRateDecay(Double.parseDouble(tempDecay.toString()));
             } else {
                 showPopupMessage("min: 0, max: 1", mutationRateDecayControl);
+            }
+        });
+
+        AtomicReference<String> tempLDecay = new AtomicReference<>(state.getLearningRateDecay() + "");
+        learningRateDecayControl.focusedProperty().addListener((o, oldValue, newValue) -> {
+            String previousValue = tempLDecay.toString();
+            tempLDecay.set(learningRateDecayControl.getText());
+            if (validateDoubleField(learningRateDecayControl, 0, 1, tempLDecay.toString(), previousValue)) {
+                state.setLearningRateDecay(Double.parseDouble(tempLDecay.toString()));
+            } else {
+                showPopupMessage("min: 0, max: 1", learningRateDecayControl);
             }
         });
 
@@ -348,9 +394,23 @@ public class ApplicationController implements Initializable {
 
         mutationRateOptimizerControl.setItems(optimizerList);
         mutationRateOptimizerControl.getSelectionModel().select(state.getMutationRateOptimizer().ordinal());
-        mutationRateOptimizerControl.setOnAction(e -> updateOptimizerSelection());
+        mutationRateOptimizerControl.setOnAction(e -> updateMROptimizerSelection());
         mutationRateDecayLabel.setVisible(state.getMutationRateOptimizer() != Optimizer.NONE);
         mutationRateDecayControl.setVisible(state.getMutationRateOptimizer() != Optimizer.NONE);
+
+        learningRateOptimizerControl.setItems(optimizerList);
+        learningRateOptimizerControl.getSelectionModel().select(state.getLearningRateOptimizer().ordinal());
+        learningRateOptimizerControl.setOnAction(e -> updateLROptimizerSelection());
+        learningRateDecayLabel.setVisible(state.getLearningRateOptimizer() != Optimizer.NONE);
+        learningRateDecayControl.setVisible(state.getLearningRateOptimizer() != Optimizer.NONE);
+
+        initializerControl.setItems(initializerList);
+        initializerControl.getSelectionModel().select(state.getInitializer().ordinal());
+        initializerControl.setOnAction(e -> updateInitializer());
+
+        rectifierControl.setItems(rectifierList);
+        rectifierControl.getSelectionModel().select(state.getRectifier().ordinal());
+        rectifierControl.setOnAction(e -> updateRectifier());
 
         hiddenLayerCount.setItems(layerCount);
         hiddenLayerCount.getSelectionModel().select((state.getConfiguration().length)-2);
@@ -380,11 +440,28 @@ public class ApplicationController implements Initializable {
         }
     }
 
-    private void updateOptimizerSelection() {
+    private void updateMROptimizerSelection() {
         Optimizer selectedOptimizer = Optimizer.valueOf(mutationRateOptimizerControl.getValue());
         mutationRateDecayLabel.setVisible(selectedOptimizer != Optimizer.NONE);
         mutationRateDecayControl.setVisible(selectedOptimizer != Optimizer.NONE);
         state.setMutationRateOptimizer(selectedOptimizer);
+    }
+
+    private void updateInitializer() {
+        Initializer initializer = Initializer.valueOf(initializerControl.getValue().toString());
+        state.setInitializer(initializer);
+    }
+
+    private void updateRectifier() {
+        Rectifier rectifier = Rectifier.valueOf(rectifierControl.getValue().toString());
+        state.setRectifier(rectifier);
+    }
+
+    private void updateLROptimizerSelection() {
+        Optimizer selectedOptimizer = Optimizer.valueOf(learningRateOptimizerControl.getValue());
+        learningRateDecayLabel.setVisible(selectedOptimizer != Optimizer.NONE);
+        learningRateDecayControl.setVisible(selectedOptimizer != Optimizer.NONE);
+        state.setLearningRateOptimizer(selectedOptimizer);
     }
 
     private void updateHiddenLayerCount() {

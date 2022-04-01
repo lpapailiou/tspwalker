@@ -1,6 +1,7 @@
 package main;
 
 
+import data.DatasetBuilder;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -16,6 +17,7 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         try {
+            //new DatasetBuilder().writeDataset();
             createApplicationWindow(stage);
         } catch (Exception e) {
             e.printStackTrace();

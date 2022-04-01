@@ -1,5 +1,5 @@
 package data;
 
 public enum DatasetType {
-    ATT48, DANTZIG42, FIVE
+    FIVE, SEVEN, BURMA14, BAYS29, DANTZIG42, ATT48
 }

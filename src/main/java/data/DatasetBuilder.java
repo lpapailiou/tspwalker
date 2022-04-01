@@ -27,6 +27,51 @@ public class DatasetBuilder {
     }
 
 
+    public void writeDataset() {
+        String name = "burma14";
+        File spec = getFile(name + "/spec.txt");
+
+        //File distance = getFile(name + "/distance.txt");
+        create(spec);
+    }
+
+    private Dataset create(File source) {
+        if (source != null) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(source))) {
+                String line;
+                boolean isFirstLine = true;
+                List<double[]> edges = new ArrayList<>();
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    if (isFirstLine) {
+                        isFirstLine = false;
+                    } else {
+                        String[] verticeStr = line.trim().replaceAll(" +", " ").split("\\s");
+                        double x = verticeStr.length > 1 ? Double.parseDouble(verticeStr[1]) : 0;
+                        double y = verticeStr.length > 2 ? Double.parseDouble(verticeStr[2]) : 0;
+                        double z = verticeStr.length > 3 ? Double.parseDouble(verticeStr[3]) : 0;
+                        edges.add(new double[]{x, y, z});
+                    }
+                }
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < edges.size(); i++) {
+                    double[] a = edges.get(i);
+                    for (int j = 0; j < edges.size(); j++) {
+                        double[] b = edges.get(j);
+                        double distance = Math.sqrt(Math.pow(b[0] - a[0], 2) + Math.pow(b[1] - a[1], 2));
+                        sb.append(String.format("%,.2f", distance)).append(" ");
+                    }
+                    sb.append("\n");
+                }
+                System.out.println(sb);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+
     private Dataset parseDataset(String name, File file) {
         if (file != null) {
             try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
@@ -98,7 +143,7 @@ public class DatasetBuilder {
 
 
     private File getFile(String name) {
-        try (InputStream in = Main.class.getClassLoader().getResourceAsStream("datasets/" + name)) {
+        try (InputStream in = DatasetBuilder.class.getClassLoader().getResourceAsStream("datasets/" + name)) {
             File file = File.createTempFile("tspwalker_tmp_upload", ".txt");
             Files.copy(in, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
             file.deleteOnExit();
