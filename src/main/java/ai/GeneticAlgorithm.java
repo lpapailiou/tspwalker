@@ -28,7 +28,7 @@ public class GeneticAlgorithm extends GeneticAlgorithmObject {
         super(neuralNetwork);
         vertices.get(0).setHighlighted(true);
         int n = neuralNetwork.getConfiguration()[0] / 3;
-        maxSteps = n * 5; // (n*(n-1))/2;
+        maxSteps = n * 3; // (n*(n-1))/2;
         path.add(vertices.get(0).getName());
     }
 
@@ -71,7 +71,7 @@ public class GeneticAlgorithm extends GeneticAlgorithmObject {
        /* if (path.size() > verticesVisited * 5) {
             cost += minPathLength * maxSteps * (maxSteps-steps);
         }*/
-        return !(verticesVisited == totalVertices && currentVerticeIndex == 0) && steps < maxSteps && path.size() <= verticesVisited * 3;
+        return !hasReachedGoal() && steps < maxSteps;
     }
 
     @Override
@@ -79,13 +79,16 @@ public class GeneticAlgorithm extends GeneticAlgorithmObject {
         //return (verticesVisited * maxSteps / cost + verticesVisited * maxSteps) * verticesVisited / steps;
         //return Math.pow(verticesVisited, 2) / (cost * (steps - verticesVisited));
         double verticeValue = Math.pow(verticesVisited, 3);
-        return ((verticeValue / cost + verticeValue / (cost - distance)) * 2 - distance) / cost;
+        if (isImmature()) {
+            return verticeValue / cost + verticeValue;
+        }
+        return ((verticeValue / cost + verticeValue / (cost - distance)) * 2 - distance);
         //return (verticeValue / cost + verticeValue) * ((double) verticesVisited / steps);
     }
 
     @Override
     public boolean isImmature() {
-        return verticesVisited < totalVertices / 2;
+        return false; //verticesVisited < Math.min(5, verticesVisited / 3);
     }
 
     @Override
