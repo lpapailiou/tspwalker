@@ -39,8 +39,8 @@ public class GeneticAlgorithm extends GeneticAlgorithmObject {
         for (int i = 0; i < totalVertices; i++) {
             vision[i+totalVertices] = vertices.get(i).isVisited() ? 1 : 0;
             double weight = vertices.get(currentVerticeIndex).getEdges().get(i).getWeight();
-            vision[i+totalVertices*2] = weight <= 0 ? 0 : weight / maxWeight;
-            //vision[i+totalVertices*2] = weight <= 0 ? 1 : weight / maxWeight;
+            //vision[i+totalVertices*2] = weight <= 0 ? 1 : maxWeight - weight / maxWeight;
+            vision[i+totalVertices*2] = weight <= 0 ? 1 : weight / maxWeight;
         }
         List<Double> prediction = predict(vision);
         int maxIndex = prediction.indexOf(Collections.max(prediction));
@@ -49,10 +49,14 @@ public class GeneticAlgorithm extends GeneticAlgorithmObject {
         IVertice nextVertex = vertices.get(maxIndex);
 
         vertices.get(currentVerticeIndex).setHighlighted(false);
+        boolean penalty = false;
         if (!currentVertex.isVisited()) {
             currentVertex.setVisited(true);
             verticesVisited++;
+        } else if (currentVerticeIndex != 0) {
+            penalty = true;
         }
+
         path.add(nextVertex.getName());
 
         IEdge edge = currentVertex.getEdges().stream().filter(e -> e.getTo().equals(nextVertex)).findFirst().orElse(null);
@@ -60,14 +64,14 @@ public class GeneticAlgorithm extends GeneticAlgorithmObject {
 
         double weight = edge.getWeight();
         distance += weight;
-        cost += weight == 0 ? minPathLength * maxSteps : weight;
+        cost += weight == 0 ? minPathLength : weight;
         steps++;
         currentVerticeIndex = maxIndex;
         vertices.get(currentVerticeIndex).setHighlighted(true);
        /* if (path.size() > verticesVisited * 5) {
             cost += minPathLength * maxSteps * (maxSteps-steps);
         }*/
-        return !(verticesVisited == totalVertices && currentVerticeIndex == 0) && steps < maxSteps && path.size() <= verticesVisited * 5;
+        return !(verticesVisited == totalVertices && currentVerticeIndex == 0) && steps < maxSteps && path.size() <= verticesVisited * 3;
     }
 
     @Override
@@ -75,7 +79,7 @@ public class GeneticAlgorithm extends GeneticAlgorithmObject {
         //return (verticesVisited * maxSteps / cost + verticesVisited * maxSteps) * verticesVisited / steps;
         //return Math.pow(verticesVisited, 2) / (cost * (steps - verticesVisited));
         double verticeValue = Math.pow(verticesVisited, 3);
-        return (verticeValue / cost + verticeValue);
+        return ((verticeValue / cost + verticeValue / (cost - distance)) * 2 - distance) / cost;
         //return (verticeValue / cost + verticeValue) * ((double) verticesVisited / steps);
     }
 

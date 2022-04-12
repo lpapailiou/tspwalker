@@ -12,10 +12,10 @@ public class Dataset {
     private Graph graph;
     private Object[] rawVertices;
     private double[][] rawEdges;
-    private long minPathLength;
+    private double minPathLength;
     private double maxWeight;
 
-    public Dataset(String name, Graph graph, long minPathLength) {
+    public Dataset(String name, Graph graph, double minPathLength) {
         this.name = name;
         this.graph = graph;
         this.minPathLength = minPathLength;
@@ -31,7 +31,7 @@ public class Dataset {
         return graph;
     }
 
-    public long getMinPathLength() {
+    public double getMinPathLength() {
         return minPathLength;
     }
 

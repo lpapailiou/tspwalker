@@ -6,6 +6,13 @@ import ui.State;
 public abstract class Agent {
 
     protected final State state = State.getInstance();
-    protected final Timeline timeline = state.getTimeline();
+    protected Timeline timeline = null;
+    final protected int delay;
+    abstract void run();
+
+    public Agent() {
+        this.delay = state.getDelay();
+    }
+
 
 }

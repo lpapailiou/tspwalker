@@ -78,12 +78,12 @@ public class DatasetBuilder {
                 String line;
                 boolean isFirstLine = true;
                 Graph graph = new Graph();
-                long minPath = 0;
+                double minPath = 0;
                 List<Object[]> lineMatrix = new ArrayList<>();
                 while ((line = reader.readLine()) != null) {
                     line = line.trim();
                     if (isFirstLine) {
-                        minPath = Integer.parseInt(line);
+                        minPath = Double.parseDouble(line);
                         isFirstLine = false;
                     } else {
                         String[] verticeStr = line.trim().replaceAll(" +", " ").split("\\s");

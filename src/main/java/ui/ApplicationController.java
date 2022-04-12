@@ -1,6 +1,8 @@
 package ui;
 
 import ai.GeneticAlgorithm;
+import ai.agent.BruteForceAgent;
+import ai.agent.GeneticAgent;
 import ch.kaiki.nn.data.Graph;
 import ch.kaiki.nn.genetic.GeneticAlgorithmBatch;
 import ch.kaiki.nn.neuralnet.NeuralNetwork;
@@ -42,7 +44,8 @@ import java.util.stream.Collectors;
 
 import static ch.kaiki.nn.ui.color.NNColor.blend;
 import static javafx.scene.paint.Color.*;
-
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 public class ApplicationController implements Initializable {
     @FXML
     private GridPane grid;
@@ -117,17 +120,14 @@ private ComboBox initializerControl;
    // private Button skipBut;
     @FXML
     private Button stopBut;
-
     private Stage stage;
     private final ObservableList<String> datasetList = FXCollections.observableArrayList(Arrays.stream(DatasetType.values()).map(Enum::name).collect(Collectors.toList()));
-    private ObservableList<String> layerCount = FXCollections.observableArrayList("0", "1", "2", "3", "4", "5");
-    private ObservableList<String> optimizerList = FXCollections.observableArrayList("NONE", "SGD");
-    private ObservableList<String> rectifierList = FXCollections.observableList(Arrays.stream(Rectifier.values()).map(Enum::name).collect(Collectors.toList()));
-    private ObservableList<String> initializerList = FXCollections.observableList(Arrays.stream(Initializer.values()).map(Enum::name).collect(Collectors.toList()));
-    private State state = State.getInstance();
-    private NN2DPlot graphPlot;
-    private NN2DPlot statsPlot;
-    private NNGraph nnPlot;
+    private final ObservableList<String> layerCount = FXCollections.observableArrayList("0", "1", "2", "3", "4", "5");
+    private final ObservableList<String> optimizerList = FXCollections.observableArrayList("NONE", "SGD");
+    private final ObservableList<String> rectifierList = FXCollections.observableList(Arrays.stream(Rectifier.values()).map(Enum::name).collect(Collectors.toList()));
+    private final ObservableList<String> initializerList = FXCollections.observableList(Arrays.stream(Initializer.values()).map(Enum::name).collect(Collectors.toList()));
+    private final State state = State.getInstance();
+
     private final Color accentColor = Color.web("#c71585");
     private final GraphColor graphColor = new GraphColor(PINK, TRANSPARENT, accentColor, accentColor, LIGHTSALMON, accentColor);
     private final NNChartColor chartColor = new NNChartColor(TRANSPARENT, blend(LIGHTGRAY, TRANSPARENT, 0), DARKGRAY, LIGHTGRAY, LIGHTGRAY, DARKGRAY, DARKGRAY, DARKGRAY);
@@ -137,13 +137,10 @@ private ComboBox initializerControl;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        setGraphs();
 
-        nnPlot = new NNGraph(nnVisualizationCanvas.getGraphicsContext2D());
-        nnPlot.setColorPalette(nnGraphColor);
-        nnPlot.setNodeRadius(8);
-        nnPlot.setLineWidth(0.5);
-        nnPlot.setDynamicGrowth(false, true);
+        state.inititializeNNPlot(nnVisualizationCanvas.getGraphicsContext2D(), nnGraphColor);
+        state.initializeCharts(graphCanvas.getGraphicsContext2D(), statsCanvas.getGraphicsContext2D(), chartColor);
+        state.setGraphs();
 
         datasetSelector.setItems(datasetList);
         datasetSelector.getSelectionModel().select(DatasetType.FIVE.ordinal());
@@ -152,30 +149,28 @@ private ComboBox initializerControl;
         });
         startBut.setOnAction(e -> runAlgorithm());
         //skipBut.setOnAction(e -> skip());
-        stopBut.setOnAction(e -> stopTimeline());
+        stopBut.setOnAction(e -> state.stopTimeline());
         initializeControls();
         loadDataset();
         updateHiddenLayerCount();
+        state.addAttributeRefreshlistener(e -> {
+            Platform.runLater(() -> {
+                stepCount.setText(state.getSteps() + "");
+                maxStepCount.setText(state.getMaxSteps() + "");
+                distanceCount.setText(String.format("%,.0f", state.getDistance()) + "");
+                targetDistance.setText(String.format("%,.0f", state.gettDistance()) + "");
+                generationCount.setText(state.getGen() + "");
+                pathTxt.setText(state.getPath());
+            });
+        });
+        state.addStopTimeLineListener(e -> {
+            stopTimeline();
+        });
+
         Platform.runLater(() -> grid.getParent().requestFocus());
     }
 
-    private void setGraphs() {
-        graphPlot = new NN2DPlot(graphCanvas.getGraphicsContext2D());
-        graphPlot.setChartColors(chartColor);
-        graphPlot.showTickMarkLabels(false);
-        graphPlot.showTickMarks(false);
-        graphPlot.showGridContent(false);
-        graphPlot.setTitle("graph for dataset " + state.getDatasetName());
-        graphPlot.triggerInvalidate();
 
-
-        statsPlot = new NN2DPlot(statsCanvas.getGraphicsContext2D());
-        statsPlot.setChartColors(chartColor);
-        statsPlot.setTitle("statistics");
-        statsPlot.showLegend(true);
-        statsPlot.triggerInvalidate();
-
-    }
 
     private void loadDataset() {
         // get dataset
@@ -186,105 +181,31 @@ private ComboBox initializerControl;
         Graph graph = dataset.getGraph();
         int verticeCount = graph.getVertices().size();
         state.setConfiguration(new int[]{verticeCount*3, verticeCount*2, verticeCount});
-        graphPlot.plotGraph(graph, graphColor);
+        state.setCurrentGraph(graph);
+        state.plotGraph();
 
         // TOOD: set hidden layers to default
         updateHiddenLayerCount();
         updateHiddenLayerNodeCount();
-        loadNeuralNetwork();
+        state.loadNeuralNetwork();
     }
 
     // TODO: make agent for algorithm
     // TODO: implement go / continue mode
 
-    private void loadNeuralNetwork() {
-        // initialize new neural network
-        // TODO: move functionality to state
-        NeuralNetwork neuralNetwork = new NeuralNetwork.Builder(state.getConfiguration())
-                .setMutationRate(state.getMutationRate())
-                .setMutationRateOptimizer(state.getMutationRateOptimizer())
-                .setMutationRateMomentum(state.getMutationRateDecay())
-                .setLearningRate(state.getLearningRate())
-                .setLearningRateOptimizer(state.getLearningRateOptimizer())
-                .setLearningRateMomentum(state.getLearningRateDecay())
-                .setInitializer(state.getInitializer())
-                .setDefaultRectifier(state.getRectifier())
-                .build();
-        state.setNeuralNetwork(neuralNetwork, nnPlot);
 
-    }
 
 
     private void runAlgorithm() {
-        loadNeuralNetwork();
+        state.loadNeuralNetwork();
         setDisable(true);
-        setGraphs();
-        GeneticAlgorithmBatch<GeneticAlgorithm> batch = new GeneticAlgorithmBatch<>(GeneticAlgorithm.class, state.getNeuralNetwork(), state.getPopulationSize())
-                .setReproductionPoolSize(state.getPoolSize())
-                .setReproductionSpecimenCount(state.getParentCount());
-
-        int maxGenerations = state.getGenerationCount();
-        AtomicInteger currentGeneration = new AtomicInteger(-1);
-        timeline = new Timeline((new KeyFrame(Duration.millis(200), e -> {
-            if (geneticAlgorithm[0] == null) {
-                currentGeneration.getAndIncrement();
-                batch.processGeneration();
-                NeuralNetwork best = batch.getBestNeuralNetwork();
-                geneticAlgorithm[0] = new GeneticAlgorithm(best);
-
-                if (maxGenerations != currentGeneration.get()) {
-                    state.setNeuralNetwork(best, nnPlot);
-                    graphPlot.plotGraph(geneticAlgorithm[0].getGraph(), graphColor);
-                }
-            }
-
-            if (geneticAlgorithm[0] == null || maxGenerations == currentGeneration.get()) {
-                stopTimeline();
-            } else {
-                boolean running = geneticAlgorithm[0].perform();
-                graphPlot.plotGraph(geneticAlgorithm[0].getGraph(), graphColor);
-                int steps = geneticAlgorithm[0].getSteps();
-                int maxSteps = geneticAlgorithm[0].getMaxSteps();
-                double distance = geneticAlgorithm[0].getDistance();
-                double tDistance = geneticAlgorithm[0].getTargetDistance();
-                String path = geneticAlgorithm[0].getPath().toString();
-                int gen = currentGeneration.get();
-                double fitness = geneticAlgorithm[0].getFitness();
-                double cost = geneticAlgorithm[0].getCost();
-
-                Platform.runLater(() -> {
-                    stepCount.setText(steps + "");
-                    maxStepCount.setText(maxSteps + "");
-                    distanceCount.setText(String.format("%,.0f", distance) + "");
-                    targetDistance.setText(String.format("%,.0f", tDistance) + "");
-                    generationCount.setText(gen + "");
-                    pathTxt.setText(path);
-                });
-
-                if (!running) {
-                    statsPlot.plotLine(currentGeneration.get(), cost, "cost", ORANGE.darker());
-                    statsPlot.plotLine(currentGeneration.get(), fitness, "fitness", LIMEGREEN.darker());
-                    statsPlot.plotLine(currentGeneration.get(), distance, "distance", accentColor.darker());
-
-
-                    geneticAlgorithm[0] = null;
-                }
-
-            }
-        })));
-        timeline.setCycleCount(Animation.INDEFINITE);
-        timeline.play();
+        state.setGraphs();
+        new GeneticAgent().run();
+        //new BruteForceAgent().run();
     }
 
-    private void skip() {
-        geneticAlgorithm[0] = null;
-    }
 
     private void stopTimeline() {
-        geneticAlgorithm[0] = null;
-        if (timeline != null) {
-            timeline.stop();
-        }
         setDisable(false);
     }
 
@@ -488,7 +409,7 @@ private ComboBox initializerControl;
             }
         }
         state.setConfiguration(newConfiguration);
-        loadNeuralNetwork();
+        state.loadNeuralNetwork();
     }
 
     private void updateHiddenLayerNodeCount() {
@@ -508,7 +429,7 @@ private ComboBox initializerControl;
         }
         state.setConfiguration(newConfiguration);
         if (!Arrays.equals(configuration, newConfiguration)) {
-            loadNeuralNetwork();
+            state.loadNeuralNetwork();
         }
     }
 
