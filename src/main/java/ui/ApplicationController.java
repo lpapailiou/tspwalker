@@ -1,13 +1,10 @@
 package ui;
 
-import ai.GeneticAlgorithm;
-import ai.agent.BruteForceAgent;
+import ai.GeneticNeuralNetwork;
 import ai.agent.GeneticAgent;
+import ai.agent.PathAgent;
 import ch.kaiki.nn.data.Graph;
-import ch.kaiki.nn.genetic.GeneticAlgorithmBatch;
-import ch.kaiki.nn.neuralnet.NeuralNetwork;
-import ch.kaiki.nn.ui.NN2DPlot;
-import ch.kaiki.nn.ui.NNGraph;
+import ch.kaiki.nn.genetic.CrossoverStrategy;
 import ch.kaiki.nn.ui.color.GraphColor;
 import ch.kaiki.nn.ui.color.NNChartColor;
 import ch.kaiki.nn.ui.color.NNGraphColor;
@@ -16,8 +13,6 @@ import ch.kaiki.nn.util.Optimizer;
 import ch.kaiki.nn.util.Rectifier;
 import data.Dataset;
 import data.DatasetType;
-import javafx.animation.Animation;
-import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -29,23 +24,23 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
-import javafx.util.Duration;
+import main.Mode;
 
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.ResourceBundle;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static ch.kaiki.nn.ui.color.NNColor.blend;
 import static javafx.scene.paint.Color.*;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
+
 public class ApplicationController implements Initializable {
     @FXML
     private GridPane grid;
@@ -61,6 +56,10 @@ public class ApplicationController implements Initializable {
     private Label datasetSelectorLabel;
     @FXML
     private ComboBox<String> datasetSelector;
+    @FXML
+    private Label modeSelectorLabel;
+    @FXML
+    private ComboBox<String> modeSelector;
     @FXML
     private VBox geneticControls;
 
@@ -84,6 +83,12 @@ public class ApplicationController implements Initializable {
     private ComboBox<String> mutationRateOptimizerControl;
     @FXML
     private Label mutationRateDecayLabel;
+    @FXML
+    private TextField crossoverControl;
+    @FXML
+    private ComboBox<String> crossoverStrategyControl;
+    @FXML
+    private Label crossoverLabel;
     @FXML
     private TextField mutationRateDecayControl;
     @FXML
@@ -112,6 +117,10 @@ private ComboBox initializerControl;
     private TextField generationControl;
     @FXML
     private TextField populationControl;
+    @FXML
+    private HBox neuralVisualization;
+    @FXML
+    private HBox initializerBox;
 
 
     @FXML
@@ -122,10 +131,14 @@ private ComboBox initializerControl;
     private Button stopBut;
     private Stage stage;
     private final ObservableList<String> datasetList = FXCollections.observableArrayList(Arrays.stream(DatasetType.values()).map(Enum::name).collect(Collectors.toList()));
+    private final ObservableList<String> modeList = FXCollections.observableArrayList(Arrays.stream(Mode.values()).map(Enum::name).collect(Collectors.toList()));
+
     private final ObservableList<String> layerCount = FXCollections.observableArrayList("0", "1", "2", "3", "4", "5");
     private final ObservableList<String> optimizerList = FXCollections.observableArrayList("NONE", "SGD");
     private final ObservableList<String> rectifierList = FXCollections.observableList(Arrays.stream(Rectifier.values()).map(Enum::name).collect(Collectors.toList()));
     private final ObservableList<String> initializerList = FXCollections.observableList(Arrays.stream(Initializer.values()).map(Enum::name).collect(Collectors.toList()));
+    private final ObservableList<String> crossoverList = FXCollections.observableList(Arrays.stream(CrossoverStrategy.values()).map(Enum::name).collect(Collectors.toList()));
+    private final ObservableList<String> simpleCrossoverList = FXCollections.observableArrayList("SLICE");
     private final State state = State.getInstance();
 
     private final Color accentColor = Color.web("#c71585");
@@ -133,7 +146,7 @@ private ComboBox initializerControl;
     private final NNChartColor chartColor = new NNChartColor(TRANSPARENT, blend(LIGHTGRAY, TRANSPARENT, 0), DARKGRAY, LIGHTGRAY, LIGHTGRAY, DARKGRAY, DARKGRAY, DARKGRAY);
     private final NNGraphColor nnGraphColor = new NNGraphColor(TRANSPARENT, accentColor, accentColor, LIGHTSALMON, TRANSPARENT, accentColor.brighter(), accentColor.darker(), accentColor.brighter(), accentColor.darker());
     private Timeline timeline;
-    final GeneticAlgorithm[] geneticAlgorithm = {null};
+    final GeneticNeuralNetwork[] geneticNeuralNetwork = {null};
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -147,6 +160,13 @@ private ComboBox initializerControl;
         datasetSelector.setOnAction(e -> {
             loadDataset();
         });
+
+        modeSelector.setItems(modeList);
+        modeSelector.getSelectionModel().select(Mode.NEURAL.ordinal());
+        modeSelector.setOnAction(e -> {
+            toggleMode();
+        });
+
         startBut.setOnAction(e -> runAlgorithm());
         //skipBut.setOnAction(e -> skip());
         stopBut.setOnAction(e -> state.stopTimeline());
@@ -190,9 +210,24 @@ private ComboBox initializerControl;
         state.loadNeuralNetwork();
     }
 
-    // TODO: make agent for algorithm
-    // TODO: implement go / continue mode
+    private void toggleMode() {
+        Mode mode = Mode.valueOf(modeSelector.getValue());
+        boolean showNeural = mode == Mode.NEURAL;
+/*
+        if (showNeural) {
+            crossoverStrategyControl.setItems(crossoverList);
+        } else {
+            crossoverStrategyControl.setItems(simpleCrossoverList);
+        }*/
+        updateCrossover();
+        toggleManaged(hiddenLayerConfiguration, showNeural);
+        toggleManaged(neuralVisualization, showNeural);
+        toggleManaged(initializerBox, showNeural);
 
+
+
+        //TODO
+    }
 
 
 
@@ -200,7 +235,12 @@ private ComboBox initializerControl;
         state.loadNeuralNetwork();
         setDisable(true);
         state.setGraphs();
-        new GeneticAgent().run();
+        Mode mode = Mode.valueOf(modeSelector.getValue());
+        if (mode == Mode.NEURAL) {
+            new GeneticAgent().run();
+        } else {
+            new PathAgent().run();
+        }
         //new BruteForceAgent().run();
     }
 
@@ -214,6 +254,7 @@ private ComboBox initializerControl;
         populationControl.setText(state.getPopulationSize() + "");
         mutationRateControl.setText(state.getMutationRate() + "");
         learningRateControl.setText(state.getLearningRate() + "");
+        crossoverControl.setText(state.getCrossoverSliceCount() + "");
         parentCountControl.setText(state.getParentCount() + "");
         poolSizeControl.setText(state.getPoolSize() + "");
         mutationRateDecayControl.setText(state.getMutationRateDecay() + "");
@@ -231,6 +272,17 @@ private ComboBox initializerControl;
                 state.setGenerationCount(Integer.parseInt(tempGenerations.toString()));
             } else {
                 showPopupMessage("min: 1, max: 5000", generationControl);
+            }
+        });
+
+        AtomicReference<String> tempCrossover = new AtomicReference<>(state.getCrossoverSliceCount() + "");
+        crossoverControl.focusedProperty().addListener((o, oldValue, newValue) -> {
+            String previousValue = tempCrossover.toString();
+            tempCrossover.set(crossoverControl.getText());
+            if (validateIntegerField(crossoverControl, 1, 5000, tempCrossover.toString(), previousValue)) {
+                state.setCrossoverSliceCount(Integer.parseInt(tempCrossover.toString()));
+            } else {
+                showPopupMessage("min: 1, max: 5000", crossoverControl);
             }
         });
 
@@ -329,6 +381,10 @@ private ComboBox initializerControl;
         initializerControl.getSelectionModel().select(state.getInitializer().ordinal());
         initializerControl.setOnAction(e -> updateInitializer());
 
+        crossoverStrategyControl.setItems(crossoverList);
+        crossoverStrategyControl.getSelectionModel().select(state.getCrossoverStrategy().ordinal());
+        crossoverStrategyControl.setOnAction(e -> updateCrossover());
+
         rectifierControl.setItems(rectifierList);
         rectifierControl.getSelectionModel().select(state.getRectifier().ordinal());
         rectifierControl.setOnAction(e -> updateRectifier());
@@ -371,6 +427,18 @@ private ComboBox initializerControl;
     private void updateInitializer() {
         Initializer initializer = Initializer.valueOf(initializerControl.getValue().toString());
         state.setInitializer(initializer);
+    }
+
+    private void updateCrossover() {
+        CrossoverStrategy strategy = CrossoverStrategy.valueOf(crossoverStrategyControl.getValue().toString());
+        Mode mode = Mode.valueOf(modeSelector.getValue());
+        if (strategy == CrossoverStrategy.MEAN && mode == Mode.PERMUTATION) {
+            crossoverStrategyControl.getSelectionModel().select(CrossoverStrategy.SLICE.ordinal());
+        }
+        state.setCrossoverStrategy(strategy);
+        crossoverControl.setVisible(strategy != CrossoverStrategy.MEAN);
+        crossoverLabel.setVisible(strategy != CrossoverStrategy.MEAN);
+
     }
 
     private void updateRectifier() {
@@ -487,6 +555,8 @@ private ComboBox initializerControl;
     private void setDisable(boolean disable) {
         datasetSelectorLabel.setDisable(disable);
         datasetSelector.setDisable(disable);
+        modeSelectorLabel.setDisable(disable);
+        modeSelector.setDisable(disable);
         hiddenLayerConfiguration.setDisable(disable);
         geneticControls.setDisable(disable);
         startBut.setDisable(disable);
@@ -498,5 +568,12 @@ private ComboBox initializerControl;
 
     public void setStage(Stage stage) {
         this.stage = stage;
+        toggleMode();
     }
+
+    private void toggleManaged(Node node, boolean managed) {
+        node.setManaged(managed);
+        node.setVisible(managed);
+    }
+
 }

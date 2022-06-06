@@ -34,14 +34,14 @@ public class Main extends Application {
         ClassLoader classLoader = Main.class.getClassLoader();
         FXMLLoader loader = new FXMLLoader(classLoader.getResource("Application.fxml"));
         Parent root = loader.load();
-        Scene scene = new Scene(root, 1600, 800);
+        Scene scene = new Scene(root, 1600, 900);
         scene.getStylesheets().add(classLoader.getResource("application.css").toExternalForm());
         scene.getStylesheets().add(classLoader.getResource("darkTheme.css").toExternalForm());
         stage.setScene(scene);
         stage.setMinHeight(839);
         stage.setMinWidth(1616);
-        stage.setMaxHeight(839);
-        stage.setMaxWidth(1616);
+        //stage.setMaxHeight(1039);
+        //stage.setMaxWidth(1616);
         stage.setTitle("TSP Walker | FFHS Bern 2022");
         //stage.getIcons().add(new Image("tsp.png"));
         ((ApplicationController) loader.getController()).setStage(stage);

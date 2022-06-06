@@ -8,7 +8,8 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="800.0" prefWidth="1600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.ApplicationController">
+<?import javafx.scene.shape.Box?>
+<GridPane alignment="CENTER" prefHeight="800.0" prefWidth="1600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.ApplicationController">
    <children>
       <GridPane fx:id="grid" alignment="CENTER">
         <columnConstraints>
@@ -19,11 +20,11 @@
           <RowConstraints minHeight="10.0" prefHeight="800.0" vgrow="ALWAYS" />
         </rowConstraints>
          <children>
-            <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="20.0">
+            <VBox  alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="20.0">
                <children>
                   <Canvas fx:id="graphCanvas" height="400.0" nodeOrientation="INHERIT" width="600.0" />
                    <Canvas fx:id="statsCanvas" height="200.0" nodeOrientation="INHERIT" width="600.0" />
-                   <VBox spacing="0.0">
+                   <VBox  spacing="0.0">
                        <children>
                            <HBox prefWidth="600.0" spacing="20.0">
                                <children>
@@ -84,7 +85,10 @@
                                   <HBox spacing="20">
                                       <children>
                                           <Label fx:id="datasetSelectorLabel" prefWidth="140.0" text="dataset:" />
-                                          <ComboBox fx:id="datasetSelector" prefWidth="520.0" />
+                                          <ComboBox fx:id="datasetSelector" prefWidth="180.0" />
+                                          <Region prefWidth="20.0" />
+                                          <Label fx:id="modeSelectorLabel" prefWidth="140.0" text="mode:" />
+                                          <ComboBox fx:id="modeSelector" prefWidth="180.0" />
                                       </children>
                                   </HBox>
                                   <HBox fx:id="hiddenLayerConfiguration" spacing="20">
@@ -103,42 +107,24 @@
                                          </HBox>
                                      </children>
                                   </HBox>
-                                  <HBox>
+                                  <HBox fx:id="neuralVisualization"  >
                                      <children>
                                          <Region minWidth="160.0" prefWidth="160.0" />
                                          <StackPane minWidth="520.0">
                                             <children>
                                                 <Canvas fx:id="nnVisualizationCanvas" height="400" width="520" />
-                                                <VBox alignment="CENTER_LEFT" spacing="4">
-                                        <!-- to be filled by code --> </VBox>
+                                                <VBox alignment="CENTER_LEFT" spacing="4"></VBox>
                                             </children>
                                          </StackPane>
                                      </children>
                                   </HBox>
                                   <VBox fx:id="geneticControls"  spacing="10.0">
                                       <children>
-                                          <HBox spacing="20">
+                                          <HBox fx:id="initializerBox" spacing="20">
                                               <children>
-                                                  <Label prefWidth="140.0" text="generations:" />
-                                                  <TextField fx:id="generationControl" prefWidth="50.0" text="0" />
-                                                  <Region prefWidth="20.0" />
-                                                  <Label prefWidth="120.0"  text="population size:" />
-                                                  <TextField fx:id="populationControl" prefWidth="50.0" text="0" />
-                                                  <Region prefWidth="20.0" />
-                                                  <Label prefWidth="120.0"  text="initializer:" />
+                                                  <Label prefWidth="140.0"  text="initializer:" />
                                                   <ComboBox fx:id="initializerControl" prefWidth="100.0"  />
-                                                  <Region HBox.hgrow="ALWAYS" />
-                                                  <Region prefWidth="1" />
-                                              </children>
-                                          </HBox>
-                                          <HBox spacing="20">
-                                              <children>
-                                                  <Label prefWidth="140.0" text="parent count:" />
-                                                  <TextField fx:id="parentCountControl" prefWidth="50.0" text="0" />
-                                                  <Region prefWidth="20.0" />
-                                                  <Label prefWidth="120.0"  text="pick from best %:" />
-                                                  <TextField fx:id="poolSizeControl" prefWidth="50.0" text="0" />
-                                                  <Region prefWidth="20.0" />
+                                                  <Region prefWidth="40.0" />
                                                   <Label prefWidth="120.0"  text="rectifier:" />
                                                   <ComboBox fx:id="rectifierControl" prefWidth="100.0"  />
                                                   <Region HBox.hgrow="ALWAYS" />
@@ -147,15 +133,36 @@
                                           </HBox>
                                           <HBox spacing="20">
                                               <children>
+                                                  <Label prefWidth="140.0" text="generations:" />
+                                                  <TextField fx:id="generationControl" prefWidth="50.0" text="0" />
+                                                  <Region prefWidth="90.0" />
+                                                  <Label prefWidth="120.0"  text="population size:" />
+                                                  <TextField fx:id="populationControl" prefWidth="50.0" text="0" />
+                                                  <Region HBox.hgrow="ALWAYS" />
+                                                  <Region prefWidth="1" />
+                                              </children>
+                                          </HBox>
+                                          <HBox spacing="20">
+                                              <children>
+                                                  <Label prefWidth="140.0" text="parent count:" />
+                                                  <TextField fx:id="parentCountControl" prefWidth="50.0" text="0" />
+                                                  <Region prefWidth="90.0" />
+                                                  <Label prefWidth="120.0"  text="pick from best %:" />
+                                                  <TextField fx:id="poolSizeControl" prefWidth="50.0" text="0" />
+                                                  <Region HBox.hgrow="ALWAYS" />
+                                                  <Region prefWidth="1" />
+                                              </children>
+                                          </HBox>
+                                          <HBox spacing="20">
+                                              <children>
                                                   <Label prefWidth="140.0"  text="learning rate:" />
                                                   <TextField fx:id="learningRateControl" prefWidth="50.0" text="0.0" />
-                                                  <Region prefWidth="20.0" />
+                                                  <Region prefWidth="90.0" />
                                                   <Label prefWidth="120.0"  text="optimizer:" />
                                                   <ComboBox fx:id="learningRateOptimizerControl" prefWidth="100.0"  />
-                                                  <Region prefWidth="20.0" />
+                                                  <Region prefWidth="5.0" />
                                                   <Label fx:id="learningRateDecayLabel" prefWidth="50.0"  text="decay:" />
                                                   <TextField fx:id="learningRateDecayControl" prefWidth="50.0" text="0.0" />
-                                                  <Region prefWidth="20.0" />
                                                   <Region HBox.hgrow="ALWAYS" />
                                                   <Region prefWidth="1" />
                                               </children>
@@ -164,13 +171,24 @@
                                               <children>
                                                   <Label prefWidth="140.0"  text="mutation rate:" />
                                                   <TextField fx:id="mutationRateControl" prefWidth="50.0" text="0.0" />
-                                                  <Region prefWidth="20.0" />
+                                                  <Region prefWidth="90.0" />
                                                   <Label prefWidth="120.0"  text="optimizer:" />
                                                   <ComboBox fx:id="mutationRateOptimizerControl" prefWidth="100.0"  />
-                                                  <Region prefWidth="20.0" />
+                                                  <Region prefWidth="5.0" />
                                                   <Label fx:id="mutationRateDecayLabel" prefWidth="50.0"  text="decay:" />
                                                   <TextField fx:id="mutationRateDecayControl" prefWidth="50.0" text="0.0" />
-                                                  <Region prefWidth="20.0" />
+                                                  <Region HBox.hgrow="ALWAYS" />
+                                                  <Region prefWidth="1" />
+                                              </children>
+                                          </HBox>
+                                          <HBox spacing="20">
+                                              <children>
+                                                  <Label prefWidth="140.0"  text="crossover strategy:" />
+                                                  <ComboBox fx:id="crossoverStrategyControl" prefWidth="100.0"  />
+
+                                                  <Region prefWidth="40.0" />
+                                                  <Label fx:id="crossoverLabel" prefWidth="120.0"  text="crossover slices:" />
+                                                  <TextField fx:id="crossoverControl" prefWidth="50.0" text="0.0" />
                                                   <Region HBox.hgrow="ALWAYS" />
                                                   <Region prefWidth="1" />
                                               </children>
@@ -197,4 +215,4 @@
          </children>
       </GridPane>
    </children>
-</AnchorPane>
+</GridPane>

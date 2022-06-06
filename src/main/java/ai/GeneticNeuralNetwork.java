@@ -1,14 +1,14 @@
 package ai;
 
 import ch.kaiki.nn.data.*;
-import ch.kaiki.nn.genetic.GeneticAlgorithmObject;
+import ch.kaiki.nn.genetic.GeneticObject;
 import ch.kaiki.nn.neuralnet.NeuralNetwork;
 import data.Dataset;
 import ui.State;
 
 import java.util.*;
 
-public class GeneticAlgorithm extends GeneticAlgorithmObject {
+public class GeneticNeuralNetwork extends GeneticObject {
 
     private final Dataset dataset = State.getInstance().getCurrentDataset();
     private final Graph graph = dataset.getGraph();
@@ -24,7 +24,7 @@ public class GeneticAlgorithm extends GeneticAlgorithmObject {
     private int steps;
     private final int maxSteps;
 
-    public GeneticAlgorithm(NeuralNetwork neuralNetwork) {
+    public GeneticNeuralNetwork(NeuralNetwork neuralNetwork) {
         super(neuralNetwork);
         vertices.get(0).setHighlighted(true);
         int n = neuralNetwork.getConfiguration()[0] / 3;
@@ -34,6 +34,9 @@ public class GeneticAlgorithm extends GeneticAlgorithmObject {
 
     @Override
     public boolean perform() {
+        if (!(!hasReachedGoal() && steps < maxSteps)) {
+            return false;
+        }
         double[] vision = new double[totalVertices*3];
         vision[currentVerticeIndex] = 1;
         for (int i = 0; i < totalVertices; i++) {
@@ -82,7 +85,7 @@ public class GeneticAlgorithm extends GeneticAlgorithmObject {
         if (isImmature()) {
             return verticeValue / cost + verticeValue;
         }
-        return ((verticeValue / cost + verticeValue / (cost - distance)) * 2 - distance);
+        return ((verticeValue / cost + verticeValue / (cost - distance)) * 2 - distance) + verticeValue;
         //return (verticeValue / cost + verticeValue) * ((double) verticesVisited / steps);
     }
 

@@ -1,8 +1,8 @@
 package ai.agent;
 
-import ai.GeneticNeuralNetwork;
+import ai.GeneticPath;
+import ai.PathGene;
 import ch.kaiki.nn.genetic.GeneticBatch;
-import ch.kaiki.nn.neuralnet.NeuralNetwork;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -11,11 +11,11 @@ import javafx.util.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public class GeneticAgent extends Agent {
-    private final GeneticNeuralNetwork[] currentPerformer = {null};
+public class PathAgent extends Agent {
+    private final GeneticPath[] currentPerformer = {null};
     private boolean stopped = false;
 
-    public GeneticAgent() {
+    public PathAgent() {
         state.addStopTimeLineListener(e -> {
             stopped = true;
             currentPerformer[0] = null;
@@ -27,7 +27,7 @@ public class GeneticAgent extends Agent {
 
     @Override
     public void run() {
-        GeneticBatch<GeneticNeuralNetwork, NeuralNetwork> batch = new GeneticBatch<>(GeneticNeuralNetwork.class, NeuralNetwork.class, state.getNeuralNetwork(), state.getPopulationSize())
+        GeneticBatch<GeneticPath, PathGene> batch = new GeneticBatch<>(GeneticPath.class, PathGene.class, new PathGene(), state.getPopulationSize())
                 .setReproductionPoolSize(state.getPoolSize())
                 .setReproductionSpecimenCount(state.getParentCount());
         int maxGenerations = state.getGenerationCount();
@@ -40,11 +40,11 @@ public class GeneticAgent extends Agent {
             if (currentPerformer[0] == null) {
                 currentGeneration.getAndIncrement();
                 batch.processGeneration();
-                NeuralNetwork best = (NeuralNetwork) batch.getBestGene();
-                currentPerformer[0] = new GeneticNeuralNetwork(best);
+                System.out.println("generation processed");
+                PathGene best = (PathGene) batch.getBestGene();
+                currentPerformer[0] = new GeneticPath(best);
 
                 if (maxGenerations != currentGeneration.get()) {
-                    state.setNeuralNetwork(best);
                     state.plotGraph();
                 }
 

@@ -1,6 +1,7 @@
 package ui;
 
 import ch.kaiki.nn.data.Graph;
+import ch.kaiki.nn.genetic.CrossoverStrategy;
 import ch.kaiki.nn.neuralnet.NeuralNetwork;
 import ch.kaiki.nn.ui.NN2DPlot;
 import ch.kaiki.nn.ui.NNGraph;
@@ -40,6 +41,8 @@ public class State {
     private Optimizer mutationRateOptimizer = Optimizer.NONE;
     private double mutationRateDecay = 0.01;
     private Optimizer learningRateOptimizer = Optimizer.NONE;
+    private CrossoverStrategy crossoverStrategy = CrossoverStrategy.SLICE;
+    private int crossoverSliceCount = 6;
     private double learningRateDecay = 0.01;
     private Rectifier rectifier = Rectifier.SIGMOID;
     private Initializer initializer = Initializer.XAVIER;
@@ -183,6 +186,8 @@ public class State {
                 .setLearningRate(getLearningRate())
                 .setLearningRateOptimizer(getLearningRateOptimizer())
                 .setLearningRateMomentum(getLearningRateDecay())
+                .setCrossoverStrategy(getCrossoverStrategy())
+                .setCrossoverSliceCount(getCrossoverSliceCount())
                 .setInitializer(getInitializer())
                 .setDefaultRectifier(getRectifier())
                 .build();
@@ -261,6 +266,22 @@ public class State {
 
     public double getPoolSize() {
         return poolSize;
+    }
+
+    public void setCrossoverStrategy(CrossoverStrategy crossoverStrategy) {
+        this.crossoverStrategy = crossoverStrategy;
+    }
+
+    public CrossoverStrategy getCrossoverStrategy() {
+        return crossoverStrategy;
+    }
+
+    public void setCrossoverSliceCount(int crossoverSliceCount) {
+        this.crossoverSliceCount = crossoverSliceCount;
+    }
+
+    public int getCrossoverSliceCount() {
+        return crossoverSliceCount;
     }
 
     public void setMutationRateOptimizer(Optimizer mutationRateOptimizer) {

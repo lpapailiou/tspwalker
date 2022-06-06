@@ -4,6 +4,7 @@ import ch.kaiki.nn.data.Graph;
 import ch.kaiki.nn.data.IVertice;
 import ch.kaiki.nn.data.Vertice;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Dataset {
@@ -43,6 +44,14 @@ public class Dataset {
         rawEdges = data;
     }
 
+    public List<String> getVerticeList() {
+        List<String> verticeList = new ArrayList<>();
+        for (IVertice vertice : graph.getVertices()) {
+            verticeList.add(vertice.getName());
+        }
+        return verticeList;
+    }
+
     public Dataset copy() {
         Dataset copy = new Dataset();
         copy.name = this.name;
@@ -64,6 +73,7 @@ public class Dataset {
                 copy.graph.addEdge(vertices.get(row), vertices.get(col), rawEdges[row][col]);
             }
         }
+
         return copy;
     }
 
