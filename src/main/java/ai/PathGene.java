@@ -5,12 +5,14 @@ import ch.kaiki.nn.neuralnet.NeuralNetwork;
 import ch.kaiki.nn.util.Optimizer;
 import ui.State;
 
+import java.nio.file.Path;
 import java.util.*;
 
 public class PathGene implements IGene {
 
     private final State state = State.getInstance();
     private List<String> path = state.getCurrentDataset().getVerticeList();
+
     private final Random random = new Random();
     private int iterationCount = 0;
 
@@ -23,6 +25,10 @@ public class PathGene implements IGene {
     private final double learningRateDecay = state.getLearningRateDecay();
     private final double mutationRateDecay = state.getMutationRateDecay();
     private final int crossoverSliceCount = state.getCrossoverSliceCount();
+
+    public PathGene() {
+        Collections.shuffle(path);
+    }
 
     private void swap() {
         int randA = random.nextInt(path.size());
@@ -40,15 +46,27 @@ public class PathGene implements IGene {
 
     @Override
     public List<Double> predict(double[] inputNodes) {
+        int index = 0;
+        for (int i = 0; i < path.size(); i++) {
+            if ((int) Math.ceil(inputNodes[i]) == 1) {
+                index = i;
+                break;
+            }
+        }
         List<Double> out = new ArrayList<>();
         for (double d : inputNodes) {
-            out.add(d);
+            out.add(0.0);
         }
+        int targetIndex = Integer.parseInt(path.get(index))-1;
+        out.set(targetIndex, 1.0);
         return out;
     }
 
     @Override
     public IGene crossover(List<IGene> genes) {
+        PathGene crossoverResult = (PathGene) this.copy();
+        System.out.println("path length before: " + crossoverResult.getPath().size());
+
         List<String> newPath = new ArrayList<>();
         int[] sliceIndices = new int[crossoverSliceCount-1];
 
@@ -58,12 +76,15 @@ public class PathGene implements IGene {
         }
         Arrays.sort(sliceIndices);
 
+        System.out.println("slice indexes: " + Arrays.toString(sliceIndices));
+
         // collect slices
         int startIndex = 0;
         int endIndex;
         for (int i = 0; i <= sliceIndices.length; i++) {
             int rand = random.nextInt(genes.size());
-            List<String> p = ((PathGene) genes.get(rand)).getPath();
+            PathGene pg = ((PathGene) genes.get(rand));
+            List<String> p = pg.getPath();
 
             for (int j = 0; j <= sliceIndices.length; j++) {
                 endIndex = i == sliceIndices.length ? sliceIndices.length : sliceIndices[i];
@@ -73,9 +94,10 @@ public class PathGene implements IGene {
                 startIndex = endIndex;
             }
         }
-        PathGene crossoverResult = new PathGene();
+
+        System.out.println("path length after: " + newPath.size());
+        System.out.println();
         crossoverResult.setPath(newPath);
-        crossoverResult.iterationCount = this.iterationCount;
         return crossoverResult;
     }
 
@@ -90,8 +112,7 @@ public class PathGene implements IGene {
 
     @Override
     public IGene mutate() {
-        PathGene crossoverResult = new PathGene();
-        crossoverResult.iterationCount = this.iterationCount;
+        PathGene crossoverResult = (PathGene) this.copy();
         if (Math.random() < crossoverResult.mutationRate) {
             if (crossoverResult.learningRate > 0.9) {
                 crossoverResult.shuffle();
@@ -114,9 +135,14 @@ public class PathGene implements IGene {
 
     @Override
     public IGene initialize() {
-        PathGene crossoverResult = new PathGene();
-        crossoverResult.iterationCount = this.iterationCount;
-        return crossoverResult;
+        return this.copy();
+    }
+
+    private IGene copy() {
+        PathGene copy = new PathGene();
+        copy.iterationCount = this.iterationCount;
+        copy.path = this.path;
+        return copy;
     }
 
     @Override

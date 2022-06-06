@@ -34,9 +34,6 @@ public class GeneticNeuralNetwork extends GeneticObject {
 
     @Override
     public boolean perform() {
-        if (!(!hasReachedGoal() && steps < maxSteps)) {
-            return false;
-        }
         double[] vision = new double[totalVertices*3];
         vision[currentVerticeIndex] = 1;
         for (int i = 0; i < totalVertices; i++) {

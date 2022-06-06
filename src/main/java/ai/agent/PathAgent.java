@@ -40,7 +40,6 @@ public class PathAgent extends Agent {
             if (currentPerformer[0] == null) {
                 currentGeneration.getAndIncrement();
                 batch.processGeneration();
-                System.out.println("generation processed");
                 PathGene best = (PathGene) batch.getBestGene();
                 currentPerformer[0] = new GeneticPath(best);
 

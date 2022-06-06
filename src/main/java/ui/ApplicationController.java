@@ -162,7 +162,7 @@ private ComboBox initializerControl;
         });
 
         modeSelector.setItems(modeList);
-        modeSelector.getSelectionModel().select(Mode.NEURAL.ordinal());
+        modeSelector.getSelectionModel().select(Mode.PERMUTATION.ordinal());
         modeSelector.setOnAction(e -> {
             toggleMode();
         });

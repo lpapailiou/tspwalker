@@ -32,26 +32,26 @@ public class GeneticPath extends GeneticObject {
     public GeneticPath(PathGene gene) {
         super(gene);
         vertices.get(0).setHighlighted(true);
-        maxSteps = gene.getPath().size() + 1;
+        maxSteps = gene.getPath().size();
         path.add(vertices.get(0).getName());
     }
 
     @Override
     public boolean perform() {
-        List<IVertice> verticeCopy = new ArrayList<>(vertices);
-        double[] vision = new double[path.size()];
-        int nextIndex = steps;
-        if (nextIndex >= verticeCopy.size()) {
+        double[] vision = new double[vertices.size()];
+        int nextIndex = steps+1;
+        if (nextIndex >= vertices.size()) {
             nextIndex = 0;
         }
+
         vision[nextIndex] = 1;
         List<Double> prediction = predict(vision);
         int maxIndex = prediction.indexOf(Collections.max(prediction));
 
-        IVertice currentVertex = verticeCopy.get(currentVerticeIndex);
-        IVertice nextVertex = verticeCopy.get(maxIndex);
+        IVertice currentVertex = vertices.get(currentVerticeIndex);
+        IVertice nextVertex = vertices.get(maxIndex);
 
-        verticeCopy.get(currentVerticeIndex).setHighlighted(false);
+        vertices.get(currentVerticeIndex).setHighlighted(false);
         boolean penalty = false;
         if (!currentVertex.isVisited()) {
             currentVertex.setVisited(true);
@@ -81,12 +81,18 @@ public class GeneticPath extends GeneticObject {
     public double getFitness() {
         //return (verticesVisited * maxSteps / cost + verticesVisited * maxSteps) * verticesVisited / steps;
         //return Math.pow(verticesVisited, 2) / (cost * (steps - verticesVisited));
+        double fitness = 0;
         double verticeValue = Math.pow(verticesVisited, 3);
         if (isImmature()) {
-            return verticeValue / cost + verticeValue;
+            fitness = verticeValue / cost + verticeValue;
         }
-        return ((verticeValue / cost + verticeValue / (cost - distance)) * 2 - distance) + verticeValue;
+        fitness = ((verticeValue / cost + verticeValue / (cost - distance)) * 2 - distance) + verticeValue;
         //return (verticeValue / cost + verticeValue) * ((double) verticesVisited / steps);
+
+        if (fitness < 0) {
+            return 0;
+        }
+        return fitness;
     }
 
     @Override
