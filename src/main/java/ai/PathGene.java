@@ -94,7 +94,8 @@ public class PathGene implements IGene {
         int startIndex = 0;
         int endIndex;
         int rand = random.nextInt(genes.size());
-        PathGene pg = ((PathGene) genes.get(rand));
+        //PathGene pg = ((PathGene) genes.get(rand));
+        PathGene pg = ((PathGene) genes.get(0));
         List<String> p = pg.getPath();
         List<List<String>> slices = new ArrayList<>();
         for (int i = 0; i <= sliceIndices.length; i++) {    // for every slice
