@@ -92,6 +92,8 @@ public class GeneticPath extends GeneticObject {
         if (fitness < 0) {
             return 0;
         }
+
+        fitness = vertices.size() * maxWeight - distance;
         return fitness;
     }
 

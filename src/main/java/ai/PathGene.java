@@ -27,7 +27,7 @@ public class PathGene implements IGene {
     private final int crossoverSliceCount = state.getCrossoverSliceCount();
 
     public PathGene() {
-        Collections.shuffle(path);
+        shuffle();
     }
 
     private void swap() {
@@ -41,6 +41,21 @@ public class PathGene implements IGene {
 
     private void shuffle() {
         Collections.shuffle(path);
+        repair();
+    }
+
+    private void repair() {
+        int firstNode = 0;
+        for (int i = 0; i < path.size(); i++) {
+            if (path.get(i).trim().equals("1")) {
+                firstNode = i;
+                break;
+            }
+        }
+        String a = path.get(0);
+        String b = path.get(firstNode);
+        path.set(0, b);
+        path.set(firstNode, a);
     }
 
 
@@ -65,7 +80,6 @@ public class PathGene implements IGene {
     @Override
     public IGene crossover(List<IGene> genes) {
         PathGene crossoverResult = (PathGene) this.copy();
-        System.out.println("path length before: " + crossoverResult.getPath().size());
 
         List<String> newPath = new ArrayList<>();
         int[] sliceIndices = new int[crossoverSliceCount-1];
@@ -76,27 +90,26 @@ public class PathGene implements IGene {
         }
         Arrays.sort(sliceIndices);
 
-        System.out.println("slice indexes: " + Arrays.toString(sliceIndices));
-
         // collect slices
         int startIndex = 0;
         int endIndex;
-        for (int i = 0; i <= sliceIndices.length; i++) {
-            int rand = random.nextInt(genes.size());
-            PathGene pg = ((PathGene) genes.get(rand));
-            List<String> p = pg.getPath();
-
-            for (int j = 0; j <= sliceIndices.length; j++) {
-                endIndex = i == sliceIndices.length ? sliceIndices.length : sliceIndices[i];
-                for (int k = startIndex; k < endIndex; k++) {
-                    newPath.add(p.get(k));
-                }
-                startIndex = endIndex;
+        int rand = random.nextInt(genes.size());
+        PathGene pg = ((PathGene) genes.get(rand));
+        List<String> p = pg.getPath();
+        List<List<String>> slices = new ArrayList<>();
+        for (int i = 0; i <= sliceIndices.length; i++) {    // for every slice
+            List<String> slice = new ArrayList<>();
+            endIndex = i == sliceIndices.length ? path.size() : sliceIndices[i];
+            for (int k = startIndex; k < endIndex; k++) {   // for every slice, collect items
+                slice.add(p.get(k));
             }
+            slices.add(slice);
+            startIndex = endIndex;
         }
-
-        System.out.println("path length after: " + newPath.size());
-        System.out.println();
+        Collections.shuffle(slices);
+        for (List<String> s : slices) {
+            newPath.addAll(s);
+        }
         crossoverResult.setPath(newPath);
         return crossoverResult;
     }
@@ -121,6 +134,7 @@ public class PathGene implements IGene {
                 for (int i = 0; i < swapCount; i++) {
                     crossoverResult.swap();
                 }
+                repair();
             }
         }
         return crossoverResult;
