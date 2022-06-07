@@ -29,7 +29,7 @@ public class GeneticAgent extends Agent {
     public void run() {
         GeneticBatch<GeneticNeuralNetwork, NeuralNetwork> batch = new GeneticBatch<>(GeneticNeuralNetwork.class, NeuralNetwork.class, state.getNeuralNetwork(), state.getPopulationSize())
                 .setReproductionPoolSize(state.getPoolSize())
-                .setReproductionSpecimenCount(state.getParentCount());
+                .setParentCount(state.getParentCount());
         int maxGenerations = state.getGenerationCount();
         AtomicInteger currentGeneration = new AtomicInteger(-1);
 

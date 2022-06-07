@@ -117,6 +117,7 @@ public class PathGene implements IGene {
 
     private void setPath(List<String> path) {
         this.path = path;
+        repair();
     }
 
     List<String> getPath() {
@@ -135,7 +136,7 @@ public class PathGene implements IGene {
                 for (int i = 0; i < swapCount; i++) {
                     crossoverResult.swap();
                 }
-                repair();
+                crossoverResult.repair();
             }
         }
         return crossoverResult;
@@ -156,12 +157,17 @@ public class PathGene implements IGene {
     private IGene copy() {
         PathGene copy = new PathGene();
         copy.iterationCount = this.iterationCount;
-        copy.path = this.path;
+        copy.setPath(new ArrayList<>(this.path));
         return copy;
     }
 
     @Override
     public String getProperty(String key) {
         return NeuralNetwork.Builder.getProperty(key);
+    }
+
+    @Override
+    public String toString() {
+        return path.toString();
     }
 }
