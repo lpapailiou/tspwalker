@@ -23,7 +23,7 @@
             <VBox  alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="20.0">
                <children>
                   <Canvas fx:id="graphCanvas" height="400.0" nodeOrientation="INHERIT" width="600.0" />
-                   <Canvas fx:id="statsCanvas" height="200.0" nodeOrientation="INHERIT" width="600.0" />
+                   <Canvas fx:id="statsCanvas" height="300.0" nodeOrientation="INHERIT" width="600.0" />
                    <VBox  spacing="0.0">
                        <children>
                            <HBox prefWidth="600.0" spacing="20.0">
@@ -183,7 +183,7 @@
                                           </HBox>
                                           <HBox spacing="20">
                                               <children>
-                                                  <Label prefWidth="140.0"  text="crossover strategy:" />
+                                                  <Label fx:id="crossoverStrategyLabel" prefWidth="140.0"  text="crossover strategy:" />
                                                   <ComboBox fx:id="crossoverStrategyControl" prefWidth="100.0"  />
 
                                                   <Region prefWidth="40.0" />

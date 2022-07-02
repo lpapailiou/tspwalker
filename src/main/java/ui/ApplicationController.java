@@ -63,7 +63,8 @@ public class ApplicationController implements Initializable {
     @FXML
     private VBox geneticControls;
 
-
+    @FXML
+    private Label crossoverStrategyLabel;
 
     @FXML
     private ComboBox<String> hiddenLayerCount;
@@ -141,10 +142,14 @@ private ComboBox initializerControl;
     private final ObservableList<String> simpleCrossoverList = FXCollections.observableArrayList("SLICE");
     private final State state = State.getInstance();
 
-    private final Color accentColor = Color.web("#c71585");
-    private final GraphColor graphColor = new GraphColor(PINK, TRANSPARENT, accentColor, accentColor, LIGHTSALMON, accentColor);
-    private final NNChartColor chartColor = new NNChartColor(TRANSPARENT, blend(LIGHTGRAY, TRANSPARENT, 0), DARKGRAY, LIGHTGRAY, LIGHTGRAY, DARKGRAY, DARKGRAY, DARKGRAY);
-    private final NNGraphColor nnGraphColor = new NNGraphColor(TRANSPARENT, accentColor, accentColor, LIGHTSALMON, TRANSPARENT, accentColor.brighter(), accentColor.darker(), accentColor.brighter(), accentColor.darker());
+    private Color accentColor = Color.web("#c71585");
+    private Color primaryColor = PINK; // PINK
+    private Color secondaryColor = LIGHTSALMON;   // LIGHTSALMON
+    private Color lightGray = LIGHTGRAY;   // LIGHTGRAY
+    private Color darkGray = DARKGRAY;   // DARKGRAY
+    private final GraphColor graphColor = new GraphColor(primaryColor, TRANSPARENT, accentColor, accentColor, secondaryColor, accentColor);
+    private final NNChartColor chartColor = new NNChartColor(TRANSPARENT, blend(lightGray, TRANSPARENT, 0), darkGray, lightGray, lightGray, darkGray, darkGray, darkGray);
+    private final NNGraphColor nnGraphColor = new NNGraphColor(TRANSPARENT, accentColor, accentColor, secondaryColor, TRANSPARENT, accentColor.brighter(), accentColor.darker(), accentColor.brighter(), accentColor.darker());
     private Timeline timeline;
     final GeneticNeuralNetwork[] geneticNeuralNetwork = {null};
 
@@ -223,6 +228,10 @@ private ComboBox initializerControl;
         toggleManaged(hiddenLayerConfiguration, showNeural);
         toggleManaged(neuralVisualization, showNeural);
         toggleManaged(initializerBox, showNeural);
+        toggleManaged(crossoverLabel, showNeural);
+        toggleManaged(crossoverControl, showNeural);
+        toggleManaged(crossoverStrategyControl, showNeural);
+        toggleManaged(crossoverStrategyLabel, showNeural);
 
 
 
@@ -271,7 +280,7 @@ private ComboBox initializerControl;
             if (validateIntegerField(generationControl, 1, 5000, tempGenerations.toString(), previousValue)) {
                 state.setGenerationCount(Integer.parseInt(tempGenerations.toString()));
             } else {
-                showPopupMessage("min: 1, max: 5000", generationControl);
+                showPopupMessage("min: 1, max: 1000000", generationControl);
             }
         });
 

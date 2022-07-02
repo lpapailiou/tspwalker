@@ -6,10 +6,11 @@ import ch.kaiki.nn.neuralnet.NeuralNetwork;
 import data.Dataset;
 import ui.State;
 
+import java.text.DecimalFormat;
 import java.util.*;
 
 public class GeneticNeuralNetwork extends GeneticObject {
-
+    private static final DecimalFormat df = new DecimalFormat("0.0");
     private final Dataset dataset = State.getInstance().getCurrentDataset();
     private final Graph graph = dataset.getGraph();
     private final List<IVertice> vertices = graph.getVertices();
@@ -93,7 +94,7 @@ public class GeneticNeuralNetwork extends GeneticObject {
 
     @Override
     public boolean hasReachedGoal() {
-        return verticesVisited == totalVertices && currentVerticeIndex == 0 && distance == minPathLength;
+        return verticesVisited == totalVertices && currentVerticeIndex == 0 && Objects.equals(df.format(distance), df.format(minPathLength));
     }
 
     public Graph getGraph() {

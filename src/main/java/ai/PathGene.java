@@ -94,7 +94,9 @@ public class PathGene implements IGene {
         int startIndex = 0;
         int endIndex;
         int rand = random.nextInt(genes.size());
-        //PathGene pg = ((PathGene) genes.get(rand));
+        PathGene randomParent = ((PathGene) genes.get(rand));
+        crossoverResult.setPath(randomParent.getPath());
+        /*
         PathGene pg = ((PathGene) genes.get(0));
         List<String> p = pg.getPath();
         List<List<String>> slices = new ArrayList<>();
@@ -107,11 +109,13 @@ public class PathGene implements IGene {
             slices.add(slice);
             startIndex = endIndex;
         }
-        Collections.shuffle(slices);
+        //Collections.shuffle(slices);
         for (List<String> s : slices) {
             newPath.addAll(s);
         }
         crossoverResult.setPath(newPath);
+
+         */
         return crossoverResult;
     }
 
@@ -129,15 +133,11 @@ public class PathGene implements IGene {
     public IGene mutate() {
         PathGene crossoverResult = (PathGene) this.copy();
         if (Math.random() < crossoverResult.mutationRate) {
-            if (crossoverResult.learningRate > 0.9) {
-                crossoverResult.shuffle();
-            } else {
-                int swapCount = (int) (crossoverResult.path.size() * crossoverResult.learningRate) / 2;
-                for (int i = 0; i < swapCount; i++) {
-                    crossoverResult.swap();
-                }
-                crossoverResult.repair();
+            int swapCount = (int) (crossoverResult.path.size() * crossoverResult.learningRate) / 2;
+            for (int i = 0; i < swapCount; i++) {
+                crossoverResult.swap();
             }
+            crossoverResult.repair();
         }
         return crossoverResult;
     }

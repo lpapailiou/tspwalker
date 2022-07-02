@@ -28,19 +28,19 @@ import static javafx.scene.paint.Color.*;
 public class State {
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private static State instance;
-    private int delay = 50;
+    private int delay = 200;
     private List<Dataset> datasetCache = new ArrayList<>();
     private Dataset currentDataset;
     private NeuralNetwork neuralNetwork;
-    private int generationCount = 1000;
+    private int generationCount = 1000000;
     private int populationSize = 1000;
-    private double mutationRate = 1;
-    private double learningRate = 1;
-    private int parentCount = 3;
+    private double mutationRate = 0.3;
+    private double learningRate = 0.5;
+    private int parentCount = 2;
     private double poolSize = 0.75;
-    private Optimizer mutationRateOptimizer = Optimizer.NONE;
+    private Optimizer mutationRateOptimizer = Optimizer.SGD;
     private double mutationRateDecay = 0.01;
-    private Optimizer learningRateOptimizer = Optimizer.NONE;
+    private Optimizer learningRateOptimizer = Optimizer.SGD;
     private CrossoverStrategy crossoverStrategy = CrossoverStrategy.SLICE;
     private int crossoverSliceCount = 6;
     private double learningRateDecay = 0.01;
@@ -49,7 +49,10 @@ public class State {
     private NNGraph nnPlot;
     private Graph currentGraph;
     private Color accentColor = Color.web("#c71585");
-    private final GraphColor graphColor = new GraphColor(PINK, TRANSPARENT, accentColor, accentColor, LIGHTSALMON, accentColor);
+    private Color primaryColor = PINK; // PINK
+    private Color secondaryColor = LIGHTSALMON;   // LIGHTSALMON
+    private Color backgroundColor = LIGHTSALMON;   // LIGHTSALMON
+    private final GraphColor graphColor = new GraphColor(primaryColor, TRANSPARENT, accentColor, accentColor, secondaryColor, accentColor);
 
 
     private int steps;
@@ -145,7 +148,7 @@ public class State {
 
     public void plotStats() {
         //statsPlot.plotLine(gen, cost, "cost", ORANGE.darker());
-        statsPlot.plotLine(gen, fitness, "fitness", LIMEGREEN.darker());
+        //statsPlot.plotLine(gen, fitness, "fitness", LIMEGREEN.darker());
         statsPlot.plotLine(gen, distance, "distance", accentColor.darker());
     }
 

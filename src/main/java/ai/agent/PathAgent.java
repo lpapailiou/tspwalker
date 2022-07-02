@@ -42,6 +42,7 @@ public class PathAgent extends Agent {
                 PathGene bestbefore = (PathGene) batch.getBestGene();
                 batch.processGeneration();
                 PathGene best = (PathGene) batch.getBestGene();
+                /*
                 double fitness1 = -1;
                 if (bestbefore != null) {
                 GeneticPath p1 = new GeneticPath((PathGene) bestbefore.initialize());
@@ -50,7 +51,7 @@ public class PathAgent extends Agent {
                 }
                 GeneticPath p2 = new GeneticPath((PathGene) best.initialize());
                 while (p2.perform());
-                double fitness2 = p2.getFitness();
+                double fitness2 = p2.getFitness();*/
                 currentPerformer[0] = new GeneticPath(best);
 
                 if (maxGenerations != currentGeneration.get()) {
@@ -62,7 +63,12 @@ public class PathAgent extends Agent {
             if (currentPerformer[0] == null || maxGenerations == currentGeneration.get()) {
                 state.stopTimeline();
             } else {
-                boolean running = currentPerformer[0].perform();
+                //boolean running = currentPerformer[0].perform();
+                boolean running = false;
+                while (currentPerformer[0].perform()) {}
+                if (currentPerformer[0] != null && !running){
+                    System.out.println("distance: " + currentPerformer[0].getDistance());
+                }
                 state.plotGraph();
                 state.refreshAttributes(currentPerformer[0].getSteps(),
                         currentPerformer[0].getMaxSteps(),
